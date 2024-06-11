@@ -1,0 +1,157 @@
+Name,Exclusive secs,Inclusive secs,% Exclusive,% Inclusive,Module,Source File,Source Line
+"mainCRTStartup",0,12.0495,0,5.05702,"craft","[unknown]",0
+"__tmainCRTStartup",0,12.0495,0,5.05702,"craft","[unknown]",0
+"make_cube_faces",0.0874585,0.0874585,0.0367051,0.0367051,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/src/cube.c",60
+"make_cube",0.0101175,0.097576,0.00424617,0.0409513,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/src/cube.c",93
+"make_plant",0.0140552,0.118699,0.00589877,0.0498163,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/src/cube.c",137
+"db_worker_run",0,12.0495,0,5.05701,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/src/db.c",520
+"db_load_blocks",0,0.0141802,0,0.00595123,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/src/db.c",411
+"db_load_lights",0,0.0045039,0,0.00189022,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/src/db.c",430
+"db_load_signs",0,0.0099779,0,0.00418758,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/src/db.c",445
+"is_transparent",0.0880064,0.0880064,0.0369351,0.0369351,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/src/item.c",173
+"map_set_func",0.0268436,0.0268436,0.0112659,0.0112659,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/src/main.c",1171
+"gen_cube_buffer",0,0.0045231,0,0.00189828,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/src/main.c",259
+"draw_triangles_3d_ao",0.0040405,0.397866,0.00169574,0.166979,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/src/main.c",298
+"render_text.constprop.1",0,0.0035054,0,0.00147117,"craft","[unknown]",0
+"chunk_visible",0.138373,0.138373,0.058073,0.058073,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/src/main.c",544
+"hit_test",0.0035042,0.0120125,0.00147066,0.00504148,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/src/main.c",539
+"gen_sign_buffer",0,0.0045172,0,0.00189581,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/src/main.c",839
+"dirty_chunk",0.016228,0.016228,0.00681066,0.00681066,"craft","[unknown]",0
+"occlusion",0.244078,0.244078,0.102436,0.102436,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/src/main.c",918
+"compute_chunk",2.03898,2.69526,0.85573,1.13116,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/src/main.c",960
+"worker_run",0,48.1981,0,20.2281,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/src/main.c",1436
+"delete_chunks",0.0095058,0.0095058,0.00398945,0.00398945,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/src/main.c",160
+"check_workers",0.0090323,0.216788,0.00379073,0.0909829,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/src/main.c",531
+"ensure_chunks_worker",10.8824,11.219,4.56718,4.70845,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/src/main.c",1358
+"render_chunks",0.0045036,11.9378,0.0018901,5.01012,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/src/main.c",1420
+"render_wireframe",0,0.0209925,0,0.00881026,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/src/main.c",1741
+"render_item",0,0.008967,0,0.00376332,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/src/main.c",1784
+"hash",0.121826,0.121826,0.0511287,0.0511287,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/src/map.c",15
+"map_alloc",0,0.0515199,0,0.0216222,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/src/map.c",28
+"map_copy",0,0.140222,0,0.058849,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/src/map.c",42
+"map_get",0.003504,0.003504,0.00147058,0.00147058,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/src/map.c",89
+"map_grow",0.0703331,0.249908,0.0295178,0.104883,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/src/map.c",107
+"map_set",0.282245,0.510193,0.118454,0.214121,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/src/map.c",45
+"mat_rotate",0.0050023,0.0391813,0.0020994,0.0164438,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/src/matrix.c",8
+"mat_multiply",0.0105147,0.0105147,0.00441287,0.00441287,"craft","[unknown]",0
+"mat_apply",0.0549478,0.0549478,0.0230608,0.0230608,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/src/matrix.c",112
+"gen_buffer",0,0.00898,0,0.00376878,"craft","[unknown]",0
+"del_buffer",0,0.0089611,0,0.00376085,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/src/util.c",55
+"gen_faces",0,0.0949563,0,0.0398518,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/src/util.c",50
+"create_world",0.0482511,4.48365,0.0202503,1.88173,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/src/world.c",16
+"noise2",0.373256,0.373256,0.15665,0.15665,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/deps/noise/noise.c",129
+"noise3",3.34649,3.34649,1.40448,1.40448,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/deps/noise/noise.c",171
+"simplex2",0.0506655,0.423922,0.0212636,0.177914,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/deps/noise/noise.c",241
+"simplex3",0.136421,3.48291,0.0572541,1.46173,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/deps/noise/noise.c",259
+"sqlite3_free.part.0",0,0.0045039,0,0.00189022,"craft","[unknown]",0
+"mallocWithAlarm",0,0.0044703,0,0.00187612,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/deps/sqlite/sqlite3.c",19042
+"sqlite3DbFree",0.0045031,0.0045031,0.00188989,0.00188989,"craft","[unknown]",0
+"sqlite3DbMallocRaw",0,0.0044703,0,0.00187612,"craft","[unknown]",0
+"releaseMemArray.part.0",0.0055076,0.0145146,0.00231146,0.00609157,"craft","[unknown]",0
+"applyAffinity",0.0049998,0.0049998,0.00209835,0.00209835,"craft","[unknown]",0
+"sqlite3MemMalloc",0,0.0044703,0,0.00187612,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/deps/sqlite/sqlite3.c",15745
+"allocateCursor",0,0.0044703,0,0.00187612,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/deps/sqlite/sqlite3.c",58879
+"sqlite3_bind_int",0,0.0046773,0,0.001963,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/deps/sqlite/sqlite3.c",64275
+"sqlite3VdbeHalt",0,0.0145146,0,0.00609157,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/deps/sqlite/sqlite3.c",61580
+"sqlite3_reset",0,0.0055076,0,0.00231146,"craft","[unknown]",0
+"sqlite3VdbeExec",0,0.0184771,0,0.00775458,"craft","[unknown]",0
+"sqlite3_step",0,0.0184771,0,0.00775458,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/deps/sqlite/sqlite3.c",63609
+"_cnd_timedwait_win32",0,53.05,0,22.2643,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/deps/tinycthread/tinycthread.c",251
+"cnd_signal",0,0.0045188,0,0.00189648,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/deps/tinycthread/tinycthread.c",198
+"_glfwIsCompositionEnabled",0,0.00431,0,0.00180885,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/deps/glfw/src/win32_init.c",269
+"_glfwPlatformPollEvents",0,0.033539,0,0.0140758,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/deps/glfw/src/win32_window.c",995
+"_glfwPlatformGetCursorPos",0,0.0035069,0,0.0014718,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/deps/glfw/src/win32_window.c",1073
+"_glfwPlatformSwapBuffers",0,0.00431,0,0.00180885,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/deps/glfw/src/wgl_context.c",603
+"roundf",0.0050043,0.0050043,0.00210023,0.00210023,"craft","[unknown]",0
+"cosf",0,0.0045083,0,0.00189207,"craft","[unknown]",0
+"sinf",0,0.0296707,0,0.0124524,"craft","[unknown]",0
+"__fpclassify",0.0095095,0.0095095,0.003991,0.003991,"craft","[unknown]",0
+"cos",0,0.0045083,0,0.00189207,"craft","[unknown]",0
+"sin",0,0.0296707,0,0.0124524,"craft","[unknown]",0
+"__sinl_internal",0.0246695,0.0246695,0.0103534,0.0103534,"craft","[unknown]",0
+"main",0,12.0495,0,5.05702,"craft","C:/Users/roeld/Documents/git/Uni/UU/Optimization and Vectorization/Craft/src/main.c",2801
+"DllMain",1.92385,48.732,0.807415,20.4521,"atio6axx","[unknown]",0
+"DrvRealizeLayerPalette",0,0.014,0,0.0058756,"atio6axx","[unknown]",0
+"DrvSetCallbackProcs",0.144511,60.7591,0.0606492,25.4997,"atio6axx","[unknown]",0
+"boost::archive::detail::iserializer<sc_xml_iarchive,_SC_SI_PS_ATTR_CH_ENTRY>::load_object_data",0.0096628,57.5453,0.00405534,24.151,"atio6axx","[unknown]",0
+"eglGetProcAddress",0.150863,105.813,0.063315,44.4081,"atio6axx","[unknown]",0
+"wglSwapLayerBuffers",0,0.0091816,0,0.00385339,"OPENGL32","[unknown]",0
+"wglUseFontBitmapsW",0,0.0659633,0,0.0276839,"OPENGL32","[unknown]",0
+"glDrawArrays",0.0050122,0.0050122,0.00210355,0.00210355,"OPENGL32","[unknown]",0
+"wglSwapBuffers",0,0.0276899,0,0.0116211,"OPENGL32","[unknown]",0
+"DrvPresentBuffers",0,0.0383006,0,0.0160742,"atig6pxx","[unknown]",0
+"NotifyGraphicsApi",0,12.0495,0,5.05701,"amdihk64","[unknown]",0
+"Ordinal1",0,0.0171175,0,0.00718397,"dxcore","[unknown]",0
+"DwmIsCompositionEnabled",0.00431,0.00431,0.00180885,0.00180885,"dwmapi","[unknown]",0
+"DwmpDxGetWindowSharedSurface",0.0101583,0.0101583,0.0042633,0.0042633,"dwmapi","[unknown]",0
+"Ordinal186",0,0,0,0,"dwmapi","[unknown]",0
+"DescribePixelFormat",0,0.0042395,0,0.00177926,"gdi32full","[unknown]",0
+"SwapBuffers",0,0.0274211,0,0.0115083,"gdi32full","[unknown]",0
+"NtUserPeekMessage",0.0290307,0.033539,0.0121838,0.0140758,"win32u","[unknown]",0
+"NtUserMessageCall",0.0045083,0.0045083,0.00189207,0.00189207,"win32u","[unknown]",0
+"NtUserGetDC",0.0150124,0.0150124,0.00630049,0.00630049,"win32u","[unknown]",0
+"NtUserGetAncestor",0.0050286,0.0050286,0.00211043,0.00211043,"win32u","[unknown]",0
+"NtGdiDdDDICreateAllocation",0.0171175,0.0171175,0.00718397,0.00718397,"win32u","[unknown]",0
+"NtGdiDdDDIMakeResident",0.0035054,0.0035054,0.00147117,0.00147117,"win32u","[unknown]",0
+"NtGdiDdDDIMapGpuVirtualAddress",0.0131792,0.0131792,0.00553113,0.00553113,"win32u","[unknown]",0
+"NtGdiDdDDIPresent",0.0383006,0.0383006,0.0160742,0.0160742,"win32u","[unknown]",0
+"NtGdiDdDDISignalSynchronizationObjectFromGpu2",0.0085075,0.0085075,0.00357048,0.00357048,"win32u","[unknown]",0
+"NtGdiDdDDISubmitCommand",0.0145143,0.0145143,0.00609145,0.00609145,"win32u","[unknown]",0
+"NtGdiDdDDIWaitForSynchronizationObjectFromCpu",0.004281,0.004281,0.00179668,0.00179668,"win32u","[unknown]",0
+"NtUserGetCursorPos",0.0035069,0.0035069,0.0014718,0.0014718,"win32u","[unknown]",0
+"NtUserWindowFromDC",0.0226866,0.0226866,0.00952125,0.00952125,"win32u","[unknown]",0
+"LoadLibraryExA",0.0042395,0.0042395,0.00177926,0.00177926,"KERNELBASE","[unknown]",0
+"LoadLibraryExW",0,0,0,0,"KERNELBASE","[unknown]",0
+"WaitForSingleObjectEx",57.5306,57.5306,24.1448,24.1448,"KERNELBASE","[unknown]",0
+"WaitForMultipleObjects",68.0428,68.0428,28.5566,28.5566,"KERNELBASE","[unknown]",0
+"WaitForMultipleObjectsEx",0,0,0,0,"KERNELBASE","[unknown]",0
+"SetEvent",0.0045188,0.0045188,0.00189648,0.00189648,"KERNELBASE","[unknown]",0
+"SwitchToThread",3.45549,3.45549,1.45022,1.45022,"KERNELBASE","[unknown]",0
+"SleepConditionVariableSRW",39.9334,39.9334,16.7595,16.7595,"KERNELBASE","[unknown]",0
+"calloc",0.235804,0.235804,0.0989636,0.0989636,"msvcrt","[unknown]",0
+"free",0.16021,0.16021,0.0672378,0.0672378,"msvcrt","[unknown]",0
+"malloc",0.0314703,0.0314703,0.0132076,0.0132076,"msvcrt","[unknown]",0
+"realloc",0,0,0,0,"msvcrt","[unknown]",0
+"beginthreadex",0,60.2476,0,25.2851,"msvcrt","[unknown]",0
+"endthreadex",0,60.2476,0,25.2851,"msvcrt","[unknown]",0
+"memcpy",0.0819691,0.0819691,0.0344013,0.0344013,"msvcrt","[unknown]",0
+"GetDlgCtrlID",0,0.0045083,0,0.00189207,"USER32","[unknown]",0
+"CallWindowProcW",0,0.0045083,0,0.00189207,"USER32","[unknown]",0
+"DispatchMessageW",0,0.0045083,0,0.00189207,"USER32","[unknown]",0
+"PeekMessageW",0,0.033539,0,0.0140758,"USER32","[unknown]",0
+"GetPropW",0,0,0,0,"USER32","[unknown]",0
+"GetClassLongW",0,0.0045083,0,0.00189207,"USER32","[unknown]",0
+"GetCurrentThreadId",0.0055094,0.0055094,0.00231222,0.00231222,"KERNEL32","[unknown]",0
+"GlobalFindAtomW",0,0,0,0,"KERNEL32","[unknown]",0
+"BaseThreadInitThunk",0,190.075,0,79.7719,"KERNEL32","[unknown]",0
+"VerifyVersionInfoW",0.004079,0.004079,0.0017119,0.0017119,"KERNEL32","[unknown]",0
+"RtlUnicodeToCustomCPN",0,0,0,0,"ntdll","[unknown]",0
+"RtlGetFullPathName_UstrEx",0,0,0,0,"ntdll","[unknown]",0
+"RtlLeaveCriticalSection",0.0046773,0.0046773,0.001963,0.001963,"ntdll","[unknown]",0
+"LdrLoadDll",0,0,0,0,"ntdll","[unknown]",0
+"TpSetWaitEx",0.00431,0.00431,0.00180885,0.00180885,"ntdll","[unknown]",0
+"RtlClearThreadWorkOnBehalfTicket",0,0,0,0,"ntdll","[unknown]",0
+"RtlDeleteBoundaryDescriptor",0,0,0,0,"ntdll","[unknown]",0
+"RtlFreeHeap",0.0044439,0.0044439,0.00186504,0.00186504,"ntdll","[unknown]",0
+"RtlGetCurrentServiceSessionId",0,0,0,0,"ntdll","[unknown]",0
+"RtlAllocateHeap",0.009508,0.009508,0.00399037,0.00399037,"ntdll","[unknown]",0
+"RtlTryEnterCriticalSection",0,0,0,0,"ntdll","[unknown]",0
+"RtlSwitchedVVI",0,0,0,0,"ntdll","[unknown]",0
+"RtlDelayExecution",0,0,0,0,"ntdll","[unknown]",0
+"RtlUserThreadStart",48.1981,226.224,20.2281,94.943,"ntdll","[unknown]",0
+"RtlSleepConditionVariableSRW",0,0,0,0,"ntdll","[unknown]",0
+"TpCallbackSendPendingAlpcMessage",0,0,0,0,"ntdll","[unknown]",0
+"RtlUnhandledExceptionFilter",0,0,0,0,"ntdll","[unknown]",0
+"NtWaitForSingleObject",0,0,0,0,"ntdll","[unknown]",0
+"NtSetEvent",0,0,0,0,"ntdll","[unknown]",0
+"ZwFindAtom",0,0,0,0,"ntdll","[unknown]",0
+"NtAllocateVirtualMemory",0,0,0,0,"ntdll","[unknown]",0
+"NtFreeVirtualMemory",0,0,0,0,"ntdll","[unknown]",0
+"NtDelayExecution",0,0,0,0,"ntdll","[unknown]",0
+"ZwWaitForMultipleObjects",0,0,0,0,"ntdll","[unknown]",0
+"ZwAlertThreadByThreadId",0,0,0,0,"ntdll","[unknown]",0
+"ZwQueryLicenseValue",0,0,0,0,"ntdll","[unknown]",0
+"ZwWaitForAlertByThreadId",0,0,0,0,"ntdll","[unknown]",0
+"ZwWaitForWorkViaWorkerFactory",0,0,0,0,"ntdll","[unknown]",0
+"KiUserCallbackDispatcher",0,0.0045083,0,0.00189207,"ntdll","[unknown]",0
+"RtlCopyMemory",0,0,0,0,"ntdll","[unknown]",0

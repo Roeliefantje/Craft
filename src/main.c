@@ -2600,7 +2600,8 @@ int main(int argc, char **argv) {
     }
 
     glfwMakeContextCurrent(g->window);
-    glfwSwapInterval(VSYNC);
+    // glfwSwapInterval(VSYNC);
+    glfwSwapInterval(0);
     glfwSetInputMode(g->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetKeyCallback(g->window, on_key);
     glfwSetCharCallback(g->window, on_char);
