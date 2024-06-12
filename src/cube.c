@@ -26,6 +26,11 @@ void make_cube_faces(
         {0, 0, -1},
         {0, 0, +1}
     };
+    static const unsigned int normal_flags[6] = {
+        0, 1, 2, 3, 4, 5,
+    };
+
+
     static const float uvs[6][4][2] = {
         {{0, 0}, {1, 0}, {0, 1}, {1, 1}},
         {{1, 0}, {0, 0}, {1, 1}, {0, 1}},
@@ -51,6 +56,7 @@ void make_cube_faces(
         {0, 2, 1, 2, 3, 1}
     };
     float *d = data;
+    VertexData *vdp = (VertexData*)data;
     float s = 0.0625;
     float a = 0 + 1 / 2048.0;
     float b = s - 1 / 2048.0;
@@ -65,17 +71,34 @@ void make_cube_faces(
         int flip = ao[i][0] + ao[i][3] > ao[i][1] + ao[i][2];
         for (int v = 0; v < 6; v++) {
             int j = flip ? flipped[i][v] : indices[i][v];
-            *(d++) = x + n * positions[i][j][0];
-            *(d++) = y + n * positions[i][j][1];
-            *(d++) = z + n * positions[i][j][2];
-            *(d++) = normals[i][0];
-            *(d++) = normals[i][1];
-            *(d++) = normals[i][2];
-            *(d++) = du + (uvs[i][j][0] ? b : a);
-            *(d++) = dv + (uvs[i][j][1] ? b : a);
-            *(d++) = ao[i][j];
-            *(d++) = light[i][j];
+            VertexData vd;
+            vd.x = x + n * positions[i][j][0];
+            vd.y = y + n * positions[i][j][1];
+            vd.z = z + n * positions[i][j][2];
+            vd.normal_flag = normal_flags[i];
+            // vd.nx = normals[i][0];
+            // vd.ny = normals[i][1];
+            // vd.nz = normals[i][2];
+            vd.u = du + (uvs[i][j][0] ? b : a);
+            vd.v = dv + (uvs[i][j][1] ? b : a);
+            vd.t = ao[i][j];
+            vd.s = light[i][j];
+            *(vdp++) = vd;
         }
+        // for (int v = 0; v < 6; v++) {
+        //     int j = flip ? flipped[i][v] : indices[i][v];
+        //     *(d++) = x + n * positions[i][j][0];
+        //     *(d++) = y + n * positions[i][j][1];
+        //     *(d++) = z + n * positions[i][j][2];
+        //     //*(unsigned char*)(d++) = normal_flags[i]; 
+        //     *(d++) = normals[i][0];
+        //     *(d++) = normals[i][1];
+        //     *(d++) = normals[i][2];
+        //     *(d++) = du + (uvs[i][j][0] ? b : a);
+        //     *(d++) = dv + (uvs[i][j][1] ? b : a);
+        //     *(d++) = ao[i][j];
+        //     *(d++) = light[i][j];
+        // }
     }
 }
 

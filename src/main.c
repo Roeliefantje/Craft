@@ -265,6 +265,7 @@ GLuint gen_cube_buffer(float x, float y, float z, float n, int w) {
         {0.5, 0.5, 0.5, 0.5},
         {0.5, 0.5, 0.5, 0.5}
     };
+    //I dont get what ao is, it just leads to a buffer with zeroes everytime.
     make_cube(data, ao, light, 1, 1, 1, 1, 1, 1, x, y, z, n, w);
     return gen_faces(10, 6, data);
 }
@@ -292,6 +293,46 @@ GLuint gen_text_buffer(float x, float y, float n, char *text) {
     }
     return gen_faces(4, length, data);
 }
+
+
+// typedef struct {
+//     float x, y, z;
+//     unsigned char normal_flag;
+//     float u, v, t, s;
+// } VertexData;
+
+void draw_chunk_triangles_3d_ao(Attrib *attrib, GLuint buffer, int count) {
+    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    glEnableVertexAttribArray(attrib->position);
+    glEnableVertexAttribArray(attrib->normal);
+    glEnableVertexAttribArray(attrib->uv);
+    
+    
+    // glVertexAttribPointer(attrib->position, 3, GL_FLOAT, GL_FALSE,
+    //     sizeof(VertexData), 0);
+    glVertexAttribPointer(attrib->position, 3, GL_FLOAT, GL_FALSE,
+        sizeof(VertexData), 0);
+    
+    //print size of VertexData:
+    //printf("sizeof(VertexData) = %d\n", sizeof(VertexData));
+
+    glVertexAttribPointer(attrib->normal, 1, GL_UNSIGNED_INT, GL_FALSE,
+        sizeof(VertexData), (GLvoid *)(offsetof(VertexData, normal_flag)));
+    // glVertexAttribPointer(attrib->normal, 3, GL_FLOAT, GL_FALSE,
+    //     sizeof(VertexData), (GLvoid *)(offsetof(VertexData, normal_flag)));
+
+    // glVertexAttribPointer(attrib->uv, 4, GL_FLOAT, GL_FALSE,
+    //     sizeof(VertexData), (GLvoid *)(offsetof(VertexData, u)));
+    glVertexAttribPointer(attrib->uv, 4, GL_FLOAT, GL_FALSE,
+        sizeof(VertexData), (GLvoid *)(offsetof(VertexData, u)));
+
+    glDrawArrays(GL_TRIANGLES, 0, count);
+    glDisableVertexAttribArray(attrib->position);
+    glDisableVertexAttribArray(attrib->normal);
+    glDisableVertexAttribArray(attrib->uv);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
 
 void draw_triangles_3d_ao(Attrib *attrib, GLuint buffer, int count) {
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
@@ -368,11 +409,13 @@ void draw_lines(Attrib *attrib, GLuint buffer, int components, int count) {
 }
 
 void draw_chunk(Attrib *attrib, Chunk *chunk) {
-    draw_triangles_3d_ao(attrib, chunk->buffer, chunk->faces * 6);
+    //Create own function to deal with custom data types
+    draw_chunk_triangles_3d_ao(attrib, chunk->buffer, chunk->faces * 6);
+    //draw_triangles_3d_ao(attrib, chunk->buffer, chunk->faces * 6);
 }
 
 void draw_item(Attrib *attrib, GLuint buffer, int count) {
-    draw_triangles_3d_ao(attrib, buffer, count);
+    //draw_triangles_3d_ao(attrib, buffer, count);
 }
 
 void draw_text(Attrib *attrib, GLuint buffer, int length) {
@@ -526,6 +569,7 @@ Player *player_crosshair(Player *player) {
 }
 
 Chunk *find_chunk(int p, int q) {
+    //Surely we could use a hash map or some other way to more easily look up the chunk
     for (int i = 0; i < g->chunk_count; i++) {
         Chunk *chunk = g->chunks + i;
         if (chunk->p == p && chunk->q == q) {
@@ -2663,8 +2707,14 @@ int main(int argc, char **argv) {
         "shaders/block_vertex.glsl", "shaders/block_fragment.glsl");
     block_attrib.program = program;
     block_attrib.position = glGetAttribLocation(program, "position");
-    block_attrib.normal = glGetAttribLocation(program, "normal");
+
+    
+    block_attrib.normal = glGetAttribLocation(program, "normal_flag");
     block_attrib.uv = glGetAttribLocation(program, "uv");
+    printf( "block_attrib.position = %d\n", block_attrib.position );
+    printf( "block_attrib.normal = %d\n", block_attrib.normal );
+    printf( "block_attrib.uv = %d\n", block_attrib.uv );
+
     block_attrib.matrix = glGetUniformLocation(program, "matrix");
     block_attrib.sampler = glGetUniformLocation(program, "sampler");
     block_attrib.extra1 = glGetUniformLocation(program, "sky_sampler");

@@ -1,31 +1,43 @@
-#version 120
+#version 330 core
 
 uniform mat4 matrix;
 uniform vec3 camera;
 uniform float fog_distance;
 uniform int ortho;
 
-attribute vec4 position;
-attribute vec3 normal;
-attribute vec4 uv;
+in vec4 position;
+in uint normal_flag;
+in vec4 uv;
 
-varying vec2 fragment_uv;
-varying float fragment_ao;
-varying float fragment_light;
-varying float fog_factor;
-varying float fog_height;
-varying float diffuse;
+
+out vec2 fragment_uv;
+out float fragment_ao;
+out float fragment_light;
+out float fog_factor;
+out float fog_height;
+out float diffuse;
 
 const float pi = 3.14159265;
 const vec3 light_direction = normalize(vec3(-1.0, 1.0, -1.0));
 
+vec3 decodeNormal(uint flag) {
+    if (flag == 0u) return vec3(-1, 0, 0);
+    else if (flag == 1u) return vec3(1, 0, 0);
+    else if (flag == 2u) return vec3(0, 1, 0);
+    else if (flag == 3u) return vec3(0, -1, 0);
+    else if (flag == 4u) return vec3(0, 0, -1);
+    else if (flag == 5u) return vec3(0, 0, 1);
+    else return vec3(0, 0, 0); // Should not happen
+}
+
 void main() {
     gl_Position = matrix * position;
-    fragment_uv = uv.xy;
+    vec3 normal = decodeNormal(normal_flag);
+    fragment_uv = vec2(0, 0);
     fragment_ao = 0.3 + (1.0 - uv.z) * 0.7;
     fragment_light = uv.w;
     diffuse = max(0.0, dot(normal, light_direction));
-    if (bool(ortho)) {
+    if (ortho != 0) {
         fog_factor = 0.0;
         fog_height = 0.0;
     }

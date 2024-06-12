@@ -1,6 +1,14 @@
 #ifndef _cube_h_
 #define _cube_h_
 
+typedef struct {
+    float x, y, z;
+    //float nx, ny, nz;
+    unsigned int normal_flag, shit, shit2;
+    //unsigned int normal_flag;
+    float u, v, t, s;
+} VertexData;
+
 void make_cube_faces(
     float *data, float ao[6][4], float light[6][4],
     int left, int right, int top, int bottom, int front, int back,
