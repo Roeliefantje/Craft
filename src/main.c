@@ -255,7 +255,7 @@ GLuint gen_sky_buffer() {
 }
 
 GLuint gen_cube_buffer(float x, float y, float z, float n, int w) {
-    GLfloat *data = malloc_faces(10, 6);
+    GLfloat *data = malloc_faces(8, 6);
     float ao[6][4] = {0};
     float light[6][4] = {
         {0.5, 0.5, 0.5, 0.5},
@@ -267,7 +267,7 @@ GLuint gen_cube_buffer(float x, float y, float z, float n, int w) {
     };
     //I dont get what ao is, it just leads to a buffer with zeroes everytime.
     make_cube(data, ao, light, 1, 1, 1, 1, 1, 1, x, y, z, n, w);
-    return gen_faces(10, 6, data);
+    return gen_faces(8, 6, data);
 }
 
 GLuint gen_plant_buffer(float x, float y, float z, float n, int w) {
@@ -275,13 +275,13 @@ GLuint gen_plant_buffer(float x, float y, float z, float n, int w) {
     float ao = 0;
     float light = 1;
     make_plant(data, ao, light, x, y, z, n, w, 45);
-    return gen_faces(10, 4, data);
+    return gen_faces(8, 4, data);
 }
 
 GLuint gen_player_buffer(float x, float y, float z, float rx, float ry) {
     GLfloat *data = malloc_faces(10, 6);
     make_player(data, x, y, z, rx, ry);
-    return gen_faces(10, 6, data);
+    return gen_faces(8, 6, data);
 }
 
 GLuint gen_text_buffer(float x, float y, float n, char *text) {
@@ -1099,7 +1099,7 @@ void compute_chunk(WorkerItem *item) {
     } END_MAP_FOR_EACH;
 
     // generate geometry
-    GLfloat *data = malloc_faces(10, faces);
+    GLfloat *data = malloc_faces(8, faces);
     int offset = 0;
     MAP_FOR_EACH(map, ex, ey, ez, ew) {
         if (ew <= 0) {
@@ -1144,6 +1144,7 @@ void compute_chunk(WorkerItem *item) {
         float light[6][4];
         occlusion(neighbors, lights, shades, ao, light);
         if (is_plant(ew)) {
+            continue;
             total = 4;
             float min_ao = 1;
             float max_light = 0;
@@ -1164,7 +1165,7 @@ void compute_chunk(WorkerItem *item) {
                 f1, f2, f3, f4, f5, f6,
                 ex, ey, ez, 0.5, ew);
         }
-        offset += total * 60;
+        offset += total * 48;
     } END_MAP_FOR_EACH;
 
     free(opaque);
@@ -1182,8 +1183,8 @@ void generate_chunk(Chunk *chunk, WorkerItem *item) {
     chunk->maxy = item->maxy;
     chunk->faces = item->faces;
     del_buffer(chunk->buffer);
-    chunk->buffer = gen_faces(10, item->faces, item->data);
-    gen_sign_buffer(chunk);
+    chunk->buffer = gen_faces(8, item->faces, item->data);
+    //gen_sign_buffer(chunk);
 }
 
 void gen_chunk_buffer(Chunk *chunk) {
@@ -1818,6 +1819,8 @@ void render_item(Attrib *attrib) {
     glUniform1f(attrib->timer, time_of_day());
     int w = items[g->item_index];
     if (is_plant(w)) {
+        //IGNORE PLANTS FOR NOW
+        return;
         GLuint buffer = gen_plant_buffer(0, 0, 0, 0.5, w);
         draw_plant(attrib, buffer);
         del_buffer(buffer);
@@ -2873,11 +2876,13 @@ int main(int argc, char **argv) {
             g->observe1 = g->observe1 % g->player_count;
             g->observe2 = g->observe2 % g->player_count;
             delete_chunks();
-            del_buffer(me->buffer);
-            me->buffer = gen_player_buffer(s->x, s->y, s->z, s->rx, s->ry);
-            for (int i = 1; i < g->player_count; i++) {
-                interpolate_player(g->players + i);
-            }
+
+            //TODO: ENABLE THIS AGAIN
+            // del_buffer(me->buffer);
+            // me->buffer = gen_player_buffer(s->x, s->y, s->z, s->rx, s->ry);
+            // for (int i = 1; i < g->player_count; i++) {
+            //     interpolate_player(g->players + i);
+            // }
             Player *player = g->players + g->observe1;
 
             // RENDER 3-D SCENE //
@@ -2886,20 +2891,23 @@ int main(int argc, char **argv) {
             render_sky(&sky_attrib, player, sky_buffer);
             glClear(GL_DEPTH_BUFFER_BIT);
             int face_count = render_chunks(&block_attrib, player);
-            render_signs(&text_attrib, player);
-            render_sign(&text_attrib, player);
-            render_players(&block_attrib, player);
+            //int face_count = 0;
+            //render_signs(&text_attrib, player);
+            //render_sign(&text_attrib, player);
+            //TODO: FIX PALYERS RENDER
+            //render_players(&block_attrib, player);
             if (SHOW_WIREFRAME) {
-                render_wireframe(&line_attrib, player);
+                //render_wireframe(&line_attrib, player);
             }
 
             // RENDER HUD //
             glClear(GL_DEPTH_BUFFER_BIT);
             if (SHOW_CROSSHAIRS) {
-                render_crosshairs(&line_attrib);
+                //render_crosshairs(&line_attrib);
             }
             if (SHOW_ITEM) {
-                render_item(&block_attrib);
+                //TODO: TURN ON SHOW ITEM AGAIN
+                //render_item(&block_attrib);
             }
 
             // RENDER TEXT //

@@ -6,9 +6,10 @@ uniform float fog_distance;
 uniform int ortho;
 
 in vec4 position;
-in uint normal_flag;
-in vec4 uv;
 
+//in vec3 normal;
+in vec4 uv;
+in uint normal_flag;
 
 out vec2 fragment_uv;
 out float fragment_ao;
@@ -33,7 +34,7 @@ vec3 decodeNormal(uint flag) {
 void main() {
     gl_Position = matrix * position;
     vec3 normal = decodeNormal(normal_flag);
-    fragment_uv = vec2(0, 0);
+    fragment_uv = uv.xy;
     fragment_ao = 0.3 + (1.0 - uv.z) * 0.7;
     fragment_light = uv.w;
     diffuse = max(0.0, dot(normal, light_direction));

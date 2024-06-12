@@ -120,10 +120,12 @@ void make_cube(
         x, y, z, n);
 }
 
+//TODO: MAKE PLANT USE DIFFERNT NORMAL AS WELL
 void make_plant(
     float *data, float ao, float light,
     float px, float py, float pz, float n, int w, float rotation)
 {
+
     static const float positions[4][4][3] = {
         {{ 0, -1, -1}, { 0, -1, +1}, { 0, +1, -1}, { 0, +1, +1}},
         {{ 0, -1, -1}, { 0, -1, +1}, { 0, +1, -1}, { 0, +1, +1}},
@@ -136,6 +138,11 @@ void make_plant(
         {0, 0, -1},
         {0, 0, +1}
     };
+
+    static const unsigned int normal_flags[4] = {
+        0, 1, 4, 5,
+    };
+
     static const float uvs[4][4][2] = {
         {{0, 0}, {1, 0}, {0, 1}, {1, 1}},
         {{1, 0}, {0, 0}, {1, 1}, {0, 1}},
@@ -149,6 +156,7 @@ void make_plant(
         {0, 3, 1, 0, 2, 3}
     };
     float *d = data;
+    VertexData *vdp = (VertexData*)data;
     float s = 0.0625;
     float a = 0;
     float b = s;
@@ -157,16 +165,32 @@ void make_plant(
     for (int i = 0; i < 4; i++) {
         for (int v = 0; v < 6; v++) {
             int j = indices[i][v];
-            *(d++) = n * positions[i][j][0];
-            *(d++) = n * positions[i][j][1];
-            *(d++) = n * positions[i][j][2];
-            *(d++) = normals[i][0];
-            *(d++) = normals[i][1];
-            *(d++) = normals[i][2];
-            *(d++) = du + (uvs[i][j][0] ? b : a);
-            *(d++) = dv + (uvs[i][j][1] ? b : a);
-            *(d++) = ao;
-            *(d++) = light;
+            VertexData vd;
+            vd.x = n * positions[i][j][0];
+            vd.y = n * positions[i][j][1];
+            vd.z = n * positions[i][j][2];
+            vd.normal_flag = normal_flags[i];
+            // vd.nx = normals[i][0];
+            // vd.ny = normals[i][1];
+            // vd.nz = normals[i][2];
+            vd.u = du + (uvs[i][j][0] ? b : a);
+            vd.v = dv + (uvs[i][j][1] ? b : a);
+            vd.t = ao;
+            vd.s = light;
+            *(vdp++) = vd;
+
+
+            
+            // *(d++) = n * positions[i][j][0];
+            // *(d++) = n * positions[i][j][1];
+            // *(d++) = n * positions[i][j][2];
+            // *(d++) = normals[i][0];
+            // *(d++) = normals[i][1];
+            // *(d++) = normals[i][2];
+            // *(d++) = du + (uvs[i][j][0] ? b : a);
+            // *(d++) = dv + (uvs[i][j][1] ? b : a);
+            // *(d++) = ao;
+            // *(d++) = light;
         }
     }
     float ma[16];

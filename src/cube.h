@@ -4,9 +4,9 @@
 typedef struct {
     float x, y, z;
     //float nx, ny, nz;
-    unsigned int normal_flag, shit, shit2;
-    //unsigned int normal_flag;
+    unsigned int normal_flag;
     float u, v, t, s;
+    //unsigned int normal_flag;
 } VertexData;
 
 void make_cube_faces(

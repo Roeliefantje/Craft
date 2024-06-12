@@ -55,10 +55,12 @@ void del_buffer(GLuint buffer) {
     glDeleteBuffers(1, &buffer);
 }
 
+//6, because there is 6 vertices per face.
 GLfloat *malloc_faces(int components, int faces) {
     return malloc(sizeof(GLfloat) * 6 * components * faces);
 }
 
+//6, because there is 6 vertices per face, components is the amount of floats in the data.
 GLuint gen_faces(int components, int faces, GLfloat *data) {
     GLuint buffer = gen_buffer(
         sizeof(GLfloat) * 6 * components * faces, data);
