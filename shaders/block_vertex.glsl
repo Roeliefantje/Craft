@@ -6,10 +6,10 @@ uniform float fog_distance;
 uniform int ortho;
 
 in vec4 position;
+in float diffuse_bake;
 
 //in vec3 normal;
 in vec4 uv;
-in uint normal_flag;
 
 out vec2 fragment_uv;
 out float fragment_ao;
@@ -20,24 +20,28 @@ out float diffuse;
 
 const float pi = 3.14159265;
 const vec3 light_direction = normalize(vec3(-1.0, 1.0, -1.0));
+const vec3 normals[10] = vec3[](vec3(-1, 0, 0), vec3(1, 0, 0), vec3(0, 1, 0), vec3(0, -1, 0), vec3(0, 0, -1), vec3(0, 0, 1), //Cube
+normalize(vec3(1,0,-1)), normalize(vec3(-1,0,1)), normalize(vec3(-1,0,-1)), normalize(vec3(1,0,1))); //Plants
 
 vec3 decodeNormal(uint flag) {
-    if (flag == 0u) return vec3(-1, 0, 0);
-    else if (flag == 1u) return vec3(1, 0, 0);
-    else if (flag == 2u) return vec3(0, 1, 0);
-    else if (flag == 3u) return vec3(0, -1, 0);
-    else if (flag == 4u) return vec3(0, 0, -1);
-    else if (flag == 5u) return vec3(0, 0, 1);
-    else return vec3(0, 0, 0); // Should not happen
+    return normals[flag];
+    // if (flag == 0u) return vec3(-1, 0, 0);
+    // else if (flag == 1u) return vec3(1, 0, 0);
+    // else if (flag == 2u) return vec3(0, 1, 0);
+    // else if (flag == 3u) return vec3(0, -1, 0);
+    // else if (flag == 4u) return vec3(0, 0, -1);
+    // else if (flag == 5u) return vec3(0, 0, 1);
+    // else return vec3(0, 0, 0); // Should not happen
 }
 
 void main() {
     gl_Position = matrix * position;
-    vec3 normal = decodeNormal(normal_flag);
+    //vec3 normal = decodeNormal(normal_flag);
     fragment_uv = uv.xy;
     fragment_ao = 0.3 + (1.0 - uv.z) * 0.7;
     fragment_light = uv.w;
-    diffuse = max(0.0, dot(normal, light_direction));
+    //diffuse = max(0.0, dot(normal, light_direction));
+    diffuse = diffuse_bake;
     if (ortho != 0) {
         fog_factor = 0.0;
         fog_height = 0.0;

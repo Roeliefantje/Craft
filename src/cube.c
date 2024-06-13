@@ -4,6 +4,8 @@
 #include "matrix.h"
 #include "util.h"
 
+const float normalized_light_direction[3] = { -0.577350f, 0.577350f, -0.577350f };
+
 void make_cube_faces(
     float *data, float ao[6][4], float light[6][4],
     int left, int right, int top, int bottom, int front, int back,
@@ -26,6 +28,7 @@ void make_cube_faces(
         {0, 0, -1},
         {0, 0, +1}
     };
+
     static const unsigned int normal_flags[6] = {
         0, 1, 2, 3, 4, 5,
     };
@@ -75,7 +78,9 @@ void make_cube_faces(
             vd.x = x + n * positions[i][j][0];
             vd.y = y + n * positions[i][j][1];
             vd.z = z + n * positions[i][j][2];
-            vd.normal_flag = normal_flags[i];
+            vd.diffuse_bake =  normals[i][0] * normalized_light_direction[0] + 
+            normals[i][1] * normalized_light_direction[1] + 
+            normals[i][2] * normalized_light_direction[2];
             // vd.nx = normals[i][0];
             // vd.ny = normals[i][1];
             // vd.nz = normals[i][2];
@@ -140,7 +145,7 @@ void make_plant(
     };
 
     static const unsigned int normal_flags[4] = {
-        0, 1, 4, 5,
+        6, 7, 8, 9,
     };
 
     static const float uvs[4][4][2] = {
@@ -169,7 +174,12 @@ void make_plant(
             vd.x = n * positions[i][j][0];
             vd.y = n * positions[i][j][1];
             vd.z = n * positions[i][j][2];
-            vd.normal_flag = normal_flags[i];
+
+            float nm[3] = {normals[i][0], normals[i][1],normals[i][2]};
+            rotate_y(nm, RADIANS(rotation));
+            vd.diffuse_bake =  nm[0] * normalized_light_direction[0] + 
+            nm[1] * normalized_light_direction[1] + 
+            nm[2] * normalized_light_direction[2];
             // vd.nx = normals[i][0];
             // vd.ny = normals[i][1];
             // vd.nz = normals[i][2];
@@ -198,7 +208,7 @@ void make_plant(
     mat_identity(ma);
     mat_rotate(mb, 0, 1, 0, RADIANS(rotation));
     mat_multiply(ma, mb, ma);
-    mat_apply(data, ma, 24, 3, 8); //CHANGED FROM 10 TO 8, I LOVE RANDOM INTS...
+    //mat_apply(data, ma, 24, 3, 8); //CHANGED FROM 10 TO 8, I LOVE RANDOM INTS...
     mat_translate(mb, px, py, pz);
     mat_multiply(ma, mb, ma);
     mat_apply(data, ma, 24, 0, 8); //CHANGED FROM 10 TO 8, I LOVE RANDOM INTS...
@@ -230,7 +240,7 @@ void make_player(
     mat_multiply(ma, mb, ma);
     mat_rotate(mb, cosf(rx), 0, sinf(rx), -ry);
     mat_multiply(ma, mb, ma);
-    mat_apply(data, ma, 36, 3, 10);
+    //mat_apply(data, ma, 36, 3, 10);
     mat_translate(mb, x, y, z);
     mat_multiply(ma, mb, ma);
     mat_apply(data, ma, 36, 0, 10);

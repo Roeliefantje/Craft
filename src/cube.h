@@ -4,7 +4,7 @@
 typedef struct {
     float x, y, z;
     //float nx, ny, nz;
-    unsigned int normal_flag;
+    float diffuse_bake;
     float u, v, t, s;
     //unsigned int normal_flag;
 } VertexData;

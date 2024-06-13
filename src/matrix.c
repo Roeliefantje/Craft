@@ -46,6 +46,16 @@ void mat_translate(float *matrix, float dx, float dy, float dz) {
     matrix[15] = 1;
 }
 
+void rotate_y(float *v, float angle_radians) {
+    //float angle_radians = angle_degrees * M_PI / 180.0; // Convert degrees to radians
+    float cos_angle = cosf(angle_radians);
+    float sin_angle = sinf(angle_radians);
+
+    v[0] = v[0] * cos_angle - v[2] * sin_angle;
+    v[2] = v[0] * sin_angle + v[2] * cos_angle;
+    //rotated_vector.z = v.z; // No change in the z-component for rotation around z-axis
+}
+
 void mat_rotate(float *matrix, float x, float y, float z, float angle) {
     normalize(&x, &y, &z);
     float s = sinf(angle);

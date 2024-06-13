@@ -316,8 +316,8 @@ void draw_chunk_triangles_3d_ao(Attrib *attrib, GLuint buffer, int count) {
     //print size of VertexData:
     //printf("sizeof(VertexData) = %d\n", sizeof(VertexData));
 
-    glVertexAttribPointer(attrib->normal, 1, GL_UNSIGNED_INT, GL_FALSE,
-        sizeof(VertexData), (GLvoid *)(offsetof(VertexData, normal_flag)));
+    glVertexAttribPointer(attrib->normal, 1, GL_FLOAT, GL_FALSE,
+        sizeof(VertexData), (GLvoid *)(offsetof(VertexData, diffuse_bake)));
     // glVertexAttribPointer(attrib->normal, 3, GL_FLOAT, GL_FALSE,
     //     sizeof(VertexData), (GLvoid *)(offsetof(VertexData, normal_flag)));
 
@@ -2713,7 +2713,7 @@ int main(int argc, char **argv) {
     block_attrib.position = glGetAttribLocation(program, "position");
 
     
-    block_attrib.normal = glGetAttribLocation(program, "normal_flag");
+    block_attrib.normal = glGetAttribLocation(program, "diffuse_bake");
     block_attrib.uv = glGetAttribLocation(program, "uv");
     printf( "block_attrib.position = %d\n", block_attrib.position );
     printf( "block_attrib.normal = %d\n", block_attrib.normal );
