@@ -120,12 +120,12 @@ void make_cube(
         x, y, z, n);
 }
 
-//TODO: MAKE PLANT USE DIFFERNT NORMAL AS WELL
+
 void make_plant(
     float *data, float ao, float light,
     float px, float py, float pz, float n, int w, float rotation)
 {
-
+    //printf("Making plant");
     static const float positions[4][4][3] = {
         {{ 0, -1, -1}, { 0, -1, +1}, { 0, +1, -1}, { 0, +1, +1}},
         {{ 0, -1, -1}, { 0, -1, +1}, { 0, +1, -1}, { 0, +1, +1}},
@@ -180,7 +180,7 @@ void make_plant(
             *(vdp++) = vd;
 
 
-            
+
             // *(d++) = n * positions[i][j][0];
             // *(d++) = n * positions[i][j][1];
             // *(d++) = n * positions[i][j][2];
@@ -198,16 +198,17 @@ void make_plant(
     mat_identity(ma);
     mat_rotate(mb, 0, 1, 0, RADIANS(rotation));
     mat_multiply(ma, mb, ma);
-    mat_apply(data, ma, 24, 3, 10);
+    mat_apply(data, ma, 24, 3, 8); //CHANGED FROM 10 TO 8, I LOVE RANDOM INTS...
     mat_translate(mb, px, py, pz);
     mat_multiply(ma, mb, ma);
-    mat_apply(data, ma, 24, 0, 10);
+    mat_apply(data, ma, 24, 0, 8); //CHANGED FROM 10 TO 8, I LOVE RANDOM INTS...
 }
 
 void make_player(
     float *data,
     float x, float y, float z, float rx, float ry)
 {
+    //printf("making player");
     float ao[6][4] = {0};
     float light[6][4] = {
         {0.8, 0.8, 0.8, 0.8},

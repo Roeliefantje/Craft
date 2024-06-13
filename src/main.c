@@ -1091,6 +1091,7 @@ void compute_chunk(WorkerItem *item) {
             continue;
         }
         if (is_plant(ew)) {
+            //continue; //TODO: REMOVE THIS
             total = 4;
         }
         miny = MIN(miny, ey);
@@ -1099,7 +1100,7 @@ void compute_chunk(WorkerItem *item) {
     } END_MAP_FOR_EACH;
 
     // generate geometry
-    GLfloat *data = malloc_faces(8, faces);
+    GLfloat *data = malloc_faces(10, faces);
     int offset = 0;
     MAP_FOR_EACH(map, ex, ey, ez, ew) {
         if (ew <= 0) {
@@ -1144,7 +1145,7 @@ void compute_chunk(WorkerItem *item) {
         float light[6][4];
         occlusion(neighbors, lights, shades, ao, light);
         if (is_plant(ew)) {
-            continue;
+            //continue;
             total = 4;
             float min_ao = 1;
             float max_light = 0;
@@ -2878,11 +2879,11 @@ int main(int argc, char **argv) {
             delete_chunks();
 
             //TODO: ENABLE THIS AGAIN
-            // del_buffer(me->buffer);
-            // me->buffer = gen_player_buffer(s->x, s->y, s->z, s->rx, s->ry);
-            // for (int i = 1; i < g->player_count; i++) {
-            //     interpolate_player(g->players + i);
-            // }
+            del_buffer(me->buffer);
+            me->buffer = gen_player_buffer(s->x, s->y, s->z, s->rx, s->ry);
+            for (int i = 1; i < g->player_count; i++) {
+                interpolate_player(g->players + i);
+            }
             Player *player = g->players + g->observe1;
 
             // RENDER 3-D SCENE //
@@ -2892,22 +2893,22 @@ int main(int argc, char **argv) {
             glClear(GL_DEPTH_BUFFER_BIT);
             int face_count = render_chunks(&block_attrib, player);
             //int face_count = 0;
-            //render_signs(&text_attrib, player);
-            //render_sign(&text_attrib, player);
+            render_signs(&text_attrib, player);
+            render_sign(&text_attrib, player);
             //TODO: FIX PALYERS RENDER
-            //render_players(&block_attrib, player);
+            render_players(&block_attrib, player);
             if (SHOW_WIREFRAME) {
-                //render_wireframe(&line_attrib, player);
+                render_wireframe(&line_attrib, player);
             }
 
             // RENDER HUD //
             glClear(GL_DEPTH_BUFFER_BIT);
             if (SHOW_CROSSHAIRS) {
-                //render_crosshairs(&line_attrib);
+                render_crosshairs(&line_attrib);
             }
             if (SHOW_ITEM) {
                 //TODO: TURN ON SHOW ITEM AGAIN
-                //render_item(&block_attrib);
+                render_item(&block_attrib);
             }
 
             // RENDER TEXT //
