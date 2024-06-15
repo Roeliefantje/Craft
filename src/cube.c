@@ -204,14 +204,14 @@ void make_cube_faces_new(
 
             
 
-            vd.x = x_modulo + n * positions[i][j][0];
-            vd.y = y + n * positions[i][j][1];
-            // vd.z = fabs(fmodf(z, 32)) + n * positions[i][j][2];
-            vd.z = z_modulo + n * positions[i][j][2];
+            // vd.x = x_modulo + n * positions[i][j][0];
+            // vd.y = y + n * positions[i][j][1];
+            // // vd.z = fabs(fmodf(z, 32)) + n * positions[i][j][2];
+            // vd.z = z_modulo + n * positions[i][j][2];
             
-            unsigned int x = (int) x_modulo + positions[i][j][0];
-            unsigned int y = vd.y;
-            unsigned int z = z_modulo + positions[i][j][2];
+            unsigned int xi = x_modulo + n * positions[i][j][0] + 0.5;
+            unsigned int yi = y + n * positions[i][j][1] + 0.5;
+            unsigned int zi = z_modulo + n * positions[i][j][2] + 0.5;
 
             // printf("X value: %d\n", x);
             // printf("Y value: %d\n", y);
@@ -220,7 +220,7 @@ void make_cube_faces_new(
             //print X value converted to int:
 
 
-            vd.xyz = ((x & 0xFF) << 24) | ((y & 0xFF) << 16) | ((z & 0xFF) << 8);
+            vd.xyz = ((xi & 0xFF) << 24) | ((yi & 0xFF) << 16) | ((zi & 0xFF) << 8);
 
             //printf("xyz: %u\n", vd.xyz); 
 
@@ -318,9 +318,9 @@ void make_plant_new(
             VertexData vd;
             vd.xyz = (int) fmod(px, 32) << 24 | (int) py << 16 | (int) fmod(pz, 32) << 8; 
 
-            vd.x = n * positions[i][j][1];
-            vd.y = n * positions[i][j][1];
-            vd.z = n * positions[i][j][2];
+            // vd.x = n * positions[i][j][1];
+            // vd.y = n * positions[i][j][1];
+            // vd.z = n * positions[i][j][2];
 
             float nm[3] = {normals[i][0], normals[i][1],normals[i][2]};
             // rotate_y(nm, RADIANS(rotation));

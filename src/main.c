@@ -311,14 +311,14 @@ GLuint gen_text_buffer(float x, float y, float n, char *text) {
 
 void draw_chunk_triangles_3d_ao(Attrib *attrib, GLuint buffer, int count) {
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
-    glEnableVertexAttribArray(attrib->position);
+    //glEnableVertexAttribArray(attrib->position);
     glEnableVertexAttribArray(attrib->normal);
     glEnableVertexAttribArray(attrib->uv);
     glEnableVertexAttribArray(attrib->position_uint);
     
     
-    glVertexAttribPointer(attrib->position, 3, GL_FLOAT, GL_FALSE,
-        sizeof(VertexData), 0);
+    // glVertexAttribPointer(attrib->position, 3, GL_FLOAT, GL_FALSE,
+    //     sizeof(VertexData), 0);
     glVertexAttribPointer(attrib->position_uint, 1, GL_FLOAT, GL_FALSE, sizeof(VertexData), (GLvoid *)(offsetof(VertexData, xyz)));
     // glVertexAttribPointer(attrib->position, 1, GL_FLOAT, GL_FALSE,
     //     sizeof(VertexData), 0);
@@ -339,7 +339,7 @@ void draw_chunk_triangles_3d_ao(Attrib *attrib, GLuint buffer, int count) {
     
 
     glDrawArrays(GL_TRIANGLES, 0, count);
-    glDisableVertexAttribArray(attrib->position);
+    //glDisableVertexAttribArray(attrib->position);
     glDisableVertexAttribArray(attrib->normal);
     glDisableVertexAttribArray(attrib->uv);
     glDisableVertexAttribArray(attrib->position_uint);

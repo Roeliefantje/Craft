@@ -38,6 +38,6 @@ void main() {
     color = mix(color, sky_color, fog_factor);
     
 
-    // gl_FragColor = vec4(color, 1.0) + vec4(local_position.z / 256, 0, 0, 0);
-    gl_FragColor = vec4(local_position.x / 255, local_position.y / 255, local_position.z / 255, 1);
+    gl_FragColor = vec4(color, 1.0);
+    //gl_FragColor = vec4(local_position.x / 255, local_position.y / 255, local_position.z / 255, 1);
 }

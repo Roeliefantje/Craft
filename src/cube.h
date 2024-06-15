@@ -2,7 +2,7 @@
 #define _cube_h_
 
 typedef struct {
-    float x, y, z;
+    //float x, y, z;
     //unsigned int xyz;
     
     //float nx, ny, nz;

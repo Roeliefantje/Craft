@@ -37,14 +37,16 @@ vec4 getPosition(uint pos) {
     float x = int(pos >> 24);
     float y = int(pos >> 16) & 0xFF;
     float z = int(pos >> 8) & 0xFF;
-    return vec4(x, y, z, 0);
+    return vec4(x, y, z, 1);
 }
 
 void main() {
     // int vertexIndex = gl_VertexID;
     // vec4 position = getPosition(position_uint);
     local_position = getPosition(position_uint);
-    vec4 converted_position = (position + vec4(chunk_pos.x * 32, 0.0, chunk_pos.y * 32, 0.0));
+    //local_position = position;
+    // -0.5 to align back to original, doesnt really do anything but still
+    vec4 converted_position = (getPosition(position_uint) + vec4(chunk_pos.x * 32, 0.0, chunk_pos.y * 32, 0.0)) - vec4(0.5, 0.5, 0.5, 0);
 
     gl_Position = matrix * converted_position;
     //vec3 normal = decodeNormal(normal_flag);
