@@ -193,7 +193,9 @@ void make_plant_new(
     float b = s;
     float du = (plants[w] % 16) * s;
     float dv = (plants[w] / 16) * s;
+    // printf("Start of new plant\n");
     for (int i = 0; i < 4; i++) {
+        // printf("Start of new face\n");
         for (int v = 0; v < 6; v++) {
             int j = indices[i][v];
             VertexData vd;
@@ -208,13 +210,13 @@ void make_plant_new(
             // printf("Float py: %f\n", py + n * positions[i][j][1]);
             // printf("Float pz: %f\n", pz_m + n * positions[i][j][2]);
             int pxi = px_m + n * positions[i][j][1] + 0.5;
-            int pyi = py + n * positions[i][j][1] + 0.5;
+            int pyi = py + n * positions[i][j][1] + 50.5;
             int pzi = pz_m + n * positions[i][j][1] + 0.5;
             // printf("int px: %d\n", pxi);
             // printf("int py: %d\n", pyi);
             // printf("int pz: %d\n", pzi);
 
-            vd.xyz = (pxi << 24) | (pyi << 16) | (pzi << 8); 
+            vd.xyz = ((pxi & 0xFF) << 24) | ((pyi & 0xFF) << 16) | ((pzi & 0xFF) << 8);
 
             // vd.x = n * positions[i][j][1];
             // vd.y = n * positions[i][j][1];

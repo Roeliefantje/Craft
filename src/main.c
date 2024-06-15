@@ -68,7 +68,7 @@ typedef struct {
     int miny;
     int maxy;
     int faces;
-    GLfloat *data;
+    VertexData *data;
 } WorkerItem;
 
 typedef struct {
@@ -1093,10 +1093,12 @@ void compute_chunk(WorkerItem *item) {
     int miny = 256;
     int maxy = 0;
     int faces = 0;
+    
     MAP_FOR_EACH(map, ex, ey, ez, ew) {
         if (ew <= 0) {
             continue;
         }
+        
         int x = ex - ox;
         int y = ey - oy;
         int z = ez - oz;
@@ -1128,6 +1130,7 @@ void compute_chunk(WorkerItem *item) {
         if (ew <= 0) {
             continue;
         }
+
         int x = ex - ox;
         int y = ey - oy;
         int z = ez - oz;
@@ -2690,7 +2693,7 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    glEnable(GL_CULL_FACE);
+    // glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
     glLogicOp(GL_INVERT);
     glClearColor(0, 0, 0, 1);
@@ -2913,11 +2916,11 @@ int main(int argc, char **argv) {
             g->observe2 = g->observe2 % g->player_count;
 
              //TODO: ENABLE THIS AGAIN
-            // del_buffer(me->buffer);
-            // me->buffer = gen_player_buffer(s->x, s->y, s->z, s->rx, s->ry);
-            // for (int i = 1; i < g->player_count; i++) {
-            //     interpolate_player(g->players + i);
-            // }
+            del_buffer(me->buffer);
+            me->buffer = gen_player_buffer(s->x, s->y, s->z, s->rx, s->ry);
+            for (int i = 1; i < g->player_count; i++) {
+                interpolate_player(g->players + i);
+            }
             Player *player = g->players + g->observe1;
 
             // UPDATE CHUNKED POS // 
