@@ -620,13 +620,8 @@ int chunk_visible(__m256 planes[6][4], int p, int q, int miny, int maxy) {
     //     {x + d, maxy, z + d}
     // };
 
-    __m256 plane_x, plane_y, plane_z, plane_w;
-
     int n = g->ortho ? 4 : 6;
     for (int i = 0; i < n; i++) {
-        int in = 0;
-        int out = 0;
-
         __m256 res_x = _mm256_mul_ps(planes[i][0], points_x);
         __m256 res_y = _mm256_mul_ps(planes[i][1], points_y);
         __m256 res_z = _mm256_mul_ps(planes[i][2], points_z);
@@ -636,25 +631,6 @@ int chunk_visible(__m256 planes[6][4], int p, int q, int miny, int maxy) {
         int mask = _mm256_movemask_ps(res_mask);
         if(mask == 0)
             return 0;
-        // for (int j = 0; j < 8; j++) {
-        //     float d =
-        //         planes[i][0] * points[j][0] +
-        //         planes[i][1] * points[j][1] +
-        //         planes[i][2] * points[j][2] +
-        //         planes[i][3];
-        //     if (d < 0) {
-        //         out++;
-        //     }
-        //     else {
-        //         in++;
-        //     }
-        //     if (in && out) {
-        //         break;
-        //     }
-        // }
-        // if (in == 0) {
-        //     return 0;
-        // }
     }
     return 1;
 }
