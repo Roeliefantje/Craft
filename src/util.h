@@ -34,6 +34,7 @@ void del_buffer(GLuint buffer);
 GLfloat *malloc_faces(int components, int faces);
 void *malloc_faces_new( unsigned long long vertexDataSize, int faces);
 GLuint gen_faces(int components, int faces, GLfloat *data);
+GLuint gen_faces_new(unsigned long long  vertexDataSize, int faces, void * data);
 GLuint make_shader(GLenum type, const char *source);
 GLuint load_shader(GLenum type, const char *path);
 GLuint make_program(GLuint shader1, GLuint shader2);

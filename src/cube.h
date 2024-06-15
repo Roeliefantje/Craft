@@ -3,9 +3,12 @@
 
 typedef struct {
     float x, y, z;
+    //unsigned int xyz;
+    
     //float nx, ny, nz;
     float diffuse_bake;
     float u, v, t, s;
+    unsigned int xyz;
     //unsigned int normal_flag;
 } VertexData;
 

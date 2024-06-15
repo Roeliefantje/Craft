@@ -119,6 +119,7 @@ typedef struct {
     GLuint extra3;
     GLuint extra4;
     GLuint chunk_pos;
+    GLuint position_uint;
 } Attrib;
 
 typedef struct {
@@ -313,12 +314,14 @@ void draw_chunk_triangles_3d_ao(Attrib *attrib, GLuint buffer, int count) {
     glEnableVertexAttribArray(attrib->position);
     glEnableVertexAttribArray(attrib->normal);
     glEnableVertexAttribArray(attrib->uv);
+    glEnableVertexAttribArray(attrib->position_uint);
     
     
-    // glVertexAttribPointer(attrib->position, 3, GL_FLOAT, GL_FALSE,
-    //     sizeof(VertexData), 0);
     glVertexAttribPointer(attrib->position, 3, GL_FLOAT, GL_FALSE,
         sizeof(VertexData), 0);
+    glVertexAttribPointer(attrib->position_uint, 1, GL_FLOAT, GL_FALSE, sizeof(VertexData), (GLvoid *)(offsetof(VertexData, xyz)));
+    // glVertexAttribPointer(attrib->position, 1, GL_FLOAT, GL_FALSE,
+    //     sizeof(VertexData), 0);
     
     //print size of VertexData:
     //printf("sizeof(VertexData) = %d\n", sizeof(VertexData));
@@ -333,10 +336,13 @@ void draw_chunk_triangles_3d_ao(Attrib *attrib, GLuint buffer, int count) {
     glVertexAttribPointer(attrib->uv, 4, GL_FLOAT, GL_FALSE,
         sizeof(VertexData), (GLvoid *)(offsetof(VertexData, u)));
 
+    
+
     glDrawArrays(GL_TRIANGLES, 0, count);
     glDisableVertexAttribArray(attrib->position);
     glDisableVertexAttribArray(attrib->normal);
     glDisableVertexAttribArray(attrib->uv);
+    glDisableVertexAttribArray(attrib->position_uint);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
@@ -1201,7 +1207,9 @@ void generate_chunk(Chunk *chunk, WorkerItem *item) {
     chunk->maxy = item->maxy;
     chunk->faces = item->faces;
     del_buffer(chunk->buffer);
-    chunk->buffer = gen_faces(8, item->faces, item->data);
+    // chunk->buffer = gen_faces(8, item->faces, item->data);
+    // chunk-> buffer = gen_faces(9, item->faces, item->data);
+    chunk->buffer = gen_faces_new(sizeof(VertexData), item->faces, item->data);
     //gen_sign_buffer(chunk);
 }
 
@@ -2733,13 +2741,13 @@ int main(int argc, char **argv) {
         "shaders/block_vertex.glsl", "shaders/block_fragment.glsl");
     block_attrib.program = program;
     block_attrib.position = glGetAttribLocation(program, "position");
-
-    
     block_attrib.normal = glGetAttribLocation(program, "diffuse_bake");
     block_attrib.uv = glGetAttribLocation(program, "uv");
+    block_attrib.position_uint = glGetAttribLocation(program, "position_uint");
     printf( "block_attrib.position = %d\n", block_attrib.position );
     printf( "block_attrib.normal = %d\n", block_attrib.normal );
     printf( "block_attrib.uv = %d\n", block_attrib.uv );
+    printf( "block_attrib.position_uint = %d\n", block_attrib.position_uint );
 
     block_attrib.matrix = glGetUniformLocation(program, "matrix");
     block_attrib.sampler = glGetUniformLocation(program, "sampler");
@@ -2905,11 +2913,11 @@ int main(int argc, char **argv) {
             g->observe2 = g->observe2 % g->player_count;
 
              //TODO: ENABLE THIS AGAIN
-            del_buffer(me->buffer);
-            me->buffer = gen_player_buffer(s->x, s->y, s->z, s->rx, s->ry);
-            for (int i = 1; i < g->player_count; i++) {
-                interpolate_player(g->players + i);
-            }
+            // del_buffer(me->buffer);
+            // me->buffer = gen_player_buffer(s->x, s->y, s->z, s->rx, s->ry);
+            // for (int i = 1; i < g->player_count; i++) {
+            //     interpolate_player(g->players + i);
+            // }
             Player *player = g->players + g->observe1;
 
             // UPDATE CHUNKED POS // 
@@ -2923,7 +2931,7 @@ int main(int argc, char **argv) {
             }
             delete_chunks();
            
-
+            // printf("We get here");
             // RENDER 3-D SCENE //
             glClear(GL_COLOR_BUFFER_BIT);
             glClear(GL_DEPTH_BUFFER_BIT);
@@ -2931,10 +2939,10 @@ int main(int argc, char **argv) {
             glClear(GL_DEPTH_BUFFER_BIT);
             int face_count = render_chunks(&block_attrib, player);
             //int face_count = 0;
-            render_signs(&text_attrib, player);
-            render_sign(&text_attrib, player);
-            //TODO: FIX PALYERS RENDER
-            render_players(&block_attrib, player);
+            // render_signs(&text_attrib, player);
+            // render_sign(&text_attrib, player);
+            // //TODO: FIX PALYERS RENDER
+            // render_players(&block_attrib, player);
             if (SHOW_WIREFRAME) {
                 render_wireframe(&line_attrib, player);
             }
@@ -2946,7 +2954,7 @@ int main(int argc, char **argv) {
             }
             if (SHOW_ITEM) {
                 //TODO: TURN ON SHOW ITEM AGAIN
-                render_item(&block_attrib);
+                //render_item(&block_attrib);
             }
 
             // RENDER TEXT //

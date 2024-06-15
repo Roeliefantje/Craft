@@ -7,10 +7,12 @@ uniform int ortho;
 uniform vec2 chunk_pos;
 
 in vec4 position;
+
 in float diffuse_bake;
 
 //in vec3 normal;
 in vec4 uv;
+in uint position_uint;
 
 out vec2 fragment_uv;
 out float fragment_ao;
@@ -18,6 +20,7 @@ out float fragment_light;
 out float fog_factor;
 out float fog_height;
 out float diffuse;
+out vec4 local_position;
 
 const float pi = 3.14159265;
 const vec3 light_direction = normalize(vec3(-1.0, 1.0, -1.0));
@@ -28,8 +31,19 @@ vec3 decodeNormal(uint flag) {
     return normals[flag];
 }
 
-void main() {
+vec4 getPosition(uint pos) {
 
+
+    float x = int(pos >> 24);
+    float y = int(pos >> 16) & 0xFF;
+    float z = int(pos >> 8) & 0xFF;
+    return vec4(x, y, z, 0);
+}
+
+void main() {
+    // int vertexIndex = gl_VertexID;
+    // vec4 position = getPosition(position_uint);
+    local_position = getPosition(position_uint);
     vec4 converted_position = (position + vec4(chunk_pos.x * 32, 0.0, chunk_pos.y * 32, 0.0));
 
     gl_Position = matrix * converted_position;

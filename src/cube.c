@@ -75,9 +75,9 @@ void make_cube_faces(
         for (int v = 0; v < 6; v++) {
             int j = flip ? flipped[i][v] : indices[i][v];
             VertexData vd;
-            vd.x = x + n * positions[i][j][0];
-            vd.y = y + n * positions[i][j][1];
-            vd.z = z + n * positions[i][j][2];
+            // vd.x = x + n * positions[i][j][0];
+            // vd.y = y + n * positions[i][j][1];
+            // vd.z = z + n * positions[i][j][2];
             vd.diffuse_bake =  normals[i][0] * normalized_light_direction[0] + 
             normals[i][1] * normalized_light_direction[1] + 
             normals[i][2] * normalized_light_direction[2];
@@ -193,7 +193,6 @@ void make_cube_faces_new(
         int flip = ao[i][0] + ao[i][3] > ao[i][1] + ao[i][2];
         for (int v = 0; v < 6; v++) {
             int j = flip ? flipped[i][v] : indices[i][v];
-            // int j = flip ? indices[i][v] : indices[i][v];
             VertexData vd;
             //print the x value
             // vd.x = fmod(x + n * positions[i][j][0], 32);
@@ -203,13 +202,27 @@ void make_cube_faces_new(
             float z_modulo = fmod(z, 32);
             z_modulo < 0 ? z_modulo += 32 : z_modulo;
 
+            
+
             vd.x = x_modulo + n * positions[i][j][0];
             vd.y = y + n * positions[i][j][1];
             // vd.z = fabs(fmodf(z, 32)) + n * positions[i][j][2];
             vd.z = z_modulo + n * positions[i][j][2];
+            
+            unsigned int x = (int) x_modulo + positions[i][j][0];
+            unsigned int y = vd.y;
+            unsigned int z = z_modulo + positions[i][j][2];
 
-            //print the vd.x value:
-            printf("vd.x: %f\n", vd.x);
+            // printf("X value: %d\n", x);
+            // printf("Y value: %d\n", y);
+            // printf("Float value y: %f\n", vd.y);
+            // printf("Z value: %d\n", z);
+            //print X value converted to int:
+
+
+            vd.xyz = ((x & 0xFF) << 24) | ((y & 0xFF) << 16) | ((z & 0xFF) << 8);
+
+            //printf("xyz: %u\n", vd.xyz); 
 
             vd.diffuse_bake =  normals[i][0] * normalized_light_direction[0] + 
             normals[i][1] * normalized_light_direction[1] + 
@@ -292,7 +305,7 @@ void make_plant_new(
         {0, 3, 2, 0, 1, 3},
         {0, 3, 1, 0, 2, 3}
     };
-    float *d = data;
+    //float *d = data;
     VertexData *vdp = (VertexData*)data;
     float s = 0.0625;
     float a = 0;
@@ -303,7 +316,9 @@ void make_plant_new(
         for (int v = 0; v < 6; v++) {
             int j = indices[i][v];
             VertexData vd;
-            vd.x = n * positions[i][j][0];
+            vd.xyz = (int) fmod(px, 32) << 24 | (int) py << 16 | (int) fmod(pz, 32) << 8; 
+
+            vd.x = n * positions[i][j][1];
             vd.y = n * positions[i][j][1];
             vd.z = n * positions[i][j][2];
 
@@ -392,9 +407,9 @@ void make_plant(
         for (int v = 0; v < 6; v++) {
             int j = indices[i][v];
             VertexData vd;
-            vd.x = n * positions[i][j][0];
-            vd.y = n * positions[i][j][1];
-            vd.z = n * positions[i][j][2];
+            // vd.x = n * positions[i][j][0];
+            // vd.y = n * positions[i][j][1];
+            // vd.z = n * positions[i][j][2];
 
             float nm[3] = {normals[i][0], normals[i][1],normals[i][2]};
             // rotate_y(nm, RADIANS(rotation));
