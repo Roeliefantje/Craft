@@ -1301,6 +1301,7 @@ void delete_chunks() {
             }
         }
         if (delete) {
+            HASH_DEL(g->chunks_hash, chunk);
             map_free(&chunk->map);
             map_free(&chunk->lights);
             sign_list_free(&chunk->signs);
@@ -1316,6 +1317,7 @@ void delete_chunks() {
 void delete_all_chunks() {
     for (int i = 0; i < g->chunk_count; i++) {
         Chunk *chunk = g->chunks + i;
+        HASH_DEL(g->chunks_hash, chunk);
         map_free(&chunk->map);
         map_free(&chunk->lights);
         sign_list_free(&chunk->signs);
