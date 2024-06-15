@@ -263,7 +263,8 @@ GLuint gen_sky_buffer() {
 }
 
 GLuint gen_cube_buffer(float x, float y, float z, float n, int w) {
-    GLfloat *data = malloc_faces(8, 6);
+    // GLfloat *data = malloc_faces(8, 6);
+    void *data = malloc_faces_new(sizeof(VertexData), 6);
     float ao[6][4] = {0};
     float light[6][4] = {
         {0.5, 0.5, 0.5, 0.5},
@@ -274,16 +275,16 @@ GLuint gen_cube_buffer(float x, float y, float z, float n, int w) {
         {0.5, 0.5, 0.5, 0.5}
     };
     //I dont get what ao is, it just leads to a buffer with zeroes everytime.
-    make_cube_new(data, ao, light, 1, 1, 1, 1, 1, 1, x, y, z, n, w);
-    return gen_faces(8, 6, data);
+    make_cube_new((VertexData *)data, ao, light, 1, 1, 1, 1, 1, 1, x, y, z, n, w);
+    return gen_faces_new(sizeof(VertexData), 6, data);
 }
 
 GLuint gen_plant_buffer(float x, float y, float z, float n, int w) {
-    VertexData *data = malloc_faces_new(sizeof(VertexData), 4);
+    void *data = malloc_faces_new(sizeof(VertexData), 4);
     float ao = 0;
     float light = 1;
-    make_plant_new(data, ao, light, x, y, z, n, w, 45);
-    return gen_faces_new(sizeof(VertexData), 4, (void *) data);
+    make_plant_new((VertexData *) data, ao, light, x, y, z, n, w, 45);
+    return gen_faces_new(sizeof(VertexData), 4, data);
 }
 
 GLuint gen_player_buffer(float x, float y, float z, float rx, float ry) {
@@ -301,13 +302,6 @@ GLuint gen_text_buffer(float x, float y, float n, char *text) {
     }
     return gen_faces(4, length, data);
 }
-
-
-// typedef struct {
-//     float x, y, z;
-//     unsigned char normal_flag;
-//     float u, v, t, s;
-// } VertexData;
 
 void draw_chunk_triangles_3d_ao(Attrib *attrib, GLuint buffer, int count) {
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
@@ -429,7 +423,8 @@ void draw_chunk(Attrib *attrib, Chunk *chunk) {
 }
 
 void draw_item(Attrib *attrib, GLuint buffer, int count) {
-    //draw_triangles_3d_ao(attrib, buffer, count);
+    glUniform2f(attrib->chunk_pos, 0, 0);
+    draw_chunk_triangles_3d_ao(attrib, buffer, count);
 }
 
 void draw_text(Attrib *attrib, GLuint buffer, int length) {
@@ -1853,7 +1848,6 @@ void render_item(Attrib *attrib) {
     int w = items[g->item_index];
     if (is_plant(w)) {
         //IGNORE PLANTS FOR NOW
-        //return;
         GLuint buffer = gen_plant_buffer(0, 0, 0, 0.5, w);
         draw_plant(attrib, buffer);
         del_buffer(buffer);
@@ -2693,7 +2687,7 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    // glEnable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
     glLogicOp(GL_INVERT);
     glClearColor(0, 0, 0, 1);
@@ -2942,10 +2936,10 @@ int main(int argc, char **argv) {
             glClear(GL_DEPTH_BUFFER_BIT);
             int face_count = render_chunks(&block_attrib, player);
             //int face_count = 0;
-            // render_signs(&text_attrib, player);
-            // render_sign(&text_attrib, player);
+            render_signs(&text_attrib, player);
+            render_sign(&text_attrib, player);
             // //TODO: FIX PALYERS RENDER
-            // render_players(&block_attrib, player);
+            render_players(&block_attrib, player);
             if (SHOW_WIREFRAME) {
                 render_wireframe(&line_attrib, player);
             }
@@ -2957,7 +2951,7 @@ int main(int argc, char **argv) {
             }
             if (SHOW_ITEM) {
                 //TODO: TURN ON SHOW ITEM AGAIN
-                //render_item(&block_attrib);
+                render_item(&block_attrib);
             }
 
             // RENDER TEXT //

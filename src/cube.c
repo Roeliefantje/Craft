@@ -187,7 +187,7 @@ void make_plant_new(
         {0, 3, 1, 0, 2, 3}
     };
     //float *d = data;
-    VertexData *vdp = (VertexData*)data;
+    VertexData *vdp = data;
     float s = 0.0625;
     float a = 0;
     float b = s;
