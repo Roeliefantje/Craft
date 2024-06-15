@@ -599,17 +599,16 @@ int chunk_distance(Chunk *chunk, int p, int q) {
 }
 
 #if 1
-int chunk_visible(__m128 planes[6][4], int p, int q, int miny, int maxy) {
+int chunk_visible(__m256 planes[6][4], int p, int q, int miny, int maxy) {
     int x = p * CHUNK_SIZE - 1;
     int z = q * CHUNK_SIZE - 1;
     int d = CHUNK_SIZE + 1;
-    const __m128 d1 = _mm_set_ps(0,d,0,d);
-    const __m128 d2 = _mm_set_ps(0,0,d,d);
+    const __m256 d1 = _mm256_set_ps(0,d,0,d,0,d,0,d);
+    const __m256 d2 = _mm256_set_ps(0,0,d,d,0,0,d,d);
 
-    __m128 points_x = _mm_add_ps(_mm_set1_ps(x), d1);
-    __m128 points_min_y = _mm_set1_ps(miny);
-    __m128 points_max_y = _mm_set1_ps(maxy);
-    __m128 points_z = _mm_add_ps(_mm_set1_ps(z), d2);
+    __m256 points_x = _mm256_add_ps(_mm256_set1_ps(x), d1);
+    __m256 points_y = _mm256_set_ps(miny,miny,miny,miny,maxy,maxy,maxy,maxy);
+    __m256 points_z = _mm256_add_ps(_mm256_set1_ps(z), d2);
     // float points[8][3] = {
     //     {x + 0, miny, z + 0},
     //     {x + d, miny, z + 0},
@@ -621,25 +620,21 @@ int chunk_visible(__m128 planes[6][4], int p, int q, int miny, int maxy) {
     //     {x + d, maxy, z + d}
     // };
 
-    __m128 plane_x, plane_y, plane_z, plane_w;
+    __m256 plane_x, plane_y, plane_z, plane_w;
 
     int n = g->ortho ? 4 : 6;
     for (int i = 0; i < n; i++) {
-        __m128 res_x = _mm_mul_ps(planes[i][0], points_x);
-        __m128 res_y1 = _mm_mul_ps(planes[i][1], points_max_y);
-        __m128 res_y2 = _mm_mul_ps(planes[i][1], points_min_y);
-        __m128 res_z = _mm_mul_ps(planes[i][2], points_z);
+        int in = 0;
+        int out = 0;
 
-        __m128 res = _mm_add_ps(_mm_add_ps(res_x, res_z), planes[i][3]);
+        __m256 res_x = _mm256_mul_ps(planes[i][0], points_x);
+        __m256 res_y = _mm256_mul_ps(planes[i][1], points_y);
+        __m256 res_z = _mm256_mul_ps(planes[i][2], points_z);
 
-        __m128 res_tot1 = _mm_add_ps(res, res_y1);
-        __m128 res_mask1 = _mm_cmp_ps(res_tot1, _mm_setzero_ps(), _CMP_GE_OQ);
-        int mask1 = _mm_movemask_ps(res_mask1);
-        
-        __m128 res_tot2 = _mm_add_ps(res, res_y2);
-        __m128 res_mask2 = _mm_cmp_ps(res_tot2, _mm_setzero_ps(), _CMP_GE_OQ);
-        int mask2 = _mm_movemask_ps(res_mask2);
-        if(mask2 == 0 && mask1 == 0)
+        __m256 res_tot = _mm256_add_ps(_mm256_add_ps(_mm256_add_ps(res_x, res_y), res_z), planes[i][3]);
+        __m256 res_mask = _mm256_cmp_ps(res_tot, _mm256_setzero_ps(), _CMP_GE_OQ);
+        int mask = _mm256_movemask_ps(res_mask);
+        if(mask == 0)
             return 0;
         // for (int j = 0; j < 8; j++) {
         //     float d =
@@ -1462,7 +1457,7 @@ void ensure_chunks_worker(Player *player, Worker *worker) {
     set_matrix_3d(
         matrix, g->width, g->height,
         s->x, s->y, s->z, s->rx, s->ry, g->fov, g->ortho, g->render_radius);
-    __m128 planes[6][4];
+    __m256 planes[6][4];
     frustum_planes(planes, g->render_radius, matrix);
     int p = chunked(s->x);
     int q = chunked(s->z);
@@ -1745,7 +1740,7 @@ int render_chunks(Attrib *attrib, Player *player) {
     set_matrix_3d(
         matrix, g->width, g->height,
         s->x, s->y, s->z, s->rx, s->ry, g->fov, g->ortho, g->render_radius);
-    __m128 planes[6][4];
+    __m256 planes[6][4];
     frustum_planes(planes, g->render_radius, matrix);
     glUseProgram(attrib->program);
     glUniformMatrix4fv(attrib->matrix, 1, GL_FALSE, matrix);
@@ -1780,7 +1775,7 @@ void render_signs(Attrib *attrib, Player *player) {
     set_matrix_3d(
         matrix, g->width, g->height,
         s->x, s->y, s->z, s->rx, s->ry, g->fov, g->ortho, g->render_radius);
-    __m128 planes[6][4];
+    __m256 planes[6][4];
     frustum_planes(planes, g->render_radius, matrix);
     glUseProgram(attrib->program);
     glUniformMatrix4fv(attrib->matrix, 1, GL_FALSE, matrix);

@@ -126,34 +126,34 @@ void mat_apply(float *data, float *matrix, int count, int offset, int stride) {
     }
 }
 
-void frustum_planes(__m128 planes[6][4], int radius, float *matrix) {
+void frustum_planes(__m256 planes[6][4], int radius, float *matrix) {
     float znear = 0.125;
     float zfar = radius * 32 + 64;
     float *m = matrix;
-    planes[0][0] = _mm_set1_ps(m[3] + m[0]);
-    planes[0][1] = _mm_set1_ps(m[7] + m[4]);
-    planes[0][2] = _mm_set1_ps(m[11] + m[8]);
-    planes[0][3] = _mm_set1_ps(m[15] + m[12]);
-    planes[1][0] = _mm_set1_ps(m[3] - m[0]);
-    planes[1][1] = _mm_set1_ps(m[7] - m[4]);
-    planes[1][2] = _mm_set1_ps(m[11] - m[8]);
-    planes[1][3] = _mm_set1_ps(m[15] - m[12]);
-    planes[2][0] = _mm_set1_ps(m[3] + m[1]);
-    planes[2][1] = _mm_set1_ps(m[7] + m[5]);
-    planes[2][2] = _mm_set1_ps(m[11] + m[9]);
-    planes[2][3] = _mm_set1_ps(m[15] + m[13]);
-    planes[3][0] = _mm_set1_ps(m[3] - m[1]);
-    planes[3][1] = _mm_set1_ps(m[7] - m[5]);
-    planes[3][2] = _mm_set1_ps(m[11] - m[9]);
-    planes[3][3] = _mm_set1_ps(m[15] - m[13]);
-    planes[4][0] = _mm_set1_ps(znear * m[3] + m[2]);
-    planes[4][1] = _mm_set1_ps(znear * m[7] + m[6]);
-    planes[4][2] = _mm_set1_ps(znear * m[11] + m[10]);
-    planes[4][3] = _mm_set1_ps(znear * m[15] + m[14]);
-    planes[5][0] = _mm_set1_ps(zfar * m[3] - m[2]);
-    planes[5][1] = _mm_set1_ps(zfar * m[7] - m[6]);
-    planes[5][2] = _mm_set1_ps(zfar * m[11] - m[10]);
-    planes[5][3] = _mm_set1_ps(zfar * m[15] - m[14]);
+    planes[0][0] = _mm256_set1_ps(m[3] + m[0]);
+    planes[0][1] = _mm256_set1_ps(m[7] + m[4]);
+    planes[0][2] = _mm256_set1_ps(m[11] + m[8]);
+    planes[0][3] = _mm256_set1_ps(m[15] + m[12]);
+    planes[1][0] = _mm256_set1_ps(m[3] - m[0]);
+    planes[1][1] = _mm256_set1_ps(m[7] - m[4]);
+    planes[1][2] = _mm256_set1_ps(m[11] - m[8]);
+    planes[1][3] = _mm256_set1_ps(m[15] - m[12]);
+    planes[2][0] = _mm256_set1_ps(m[3] + m[1]);
+    planes[2][1] = _mm256_set1_ps(m[7] + m[5]);
+    planes[2][2] = _mm256_set1_ps(m[11] + m[9]);
+    planes[2][3] = _mm256_set1_ps(m[15] + m[13]);
+    planes[3][0] = _mm256_set1_ps(m[3] - m[1]);
+    planes[3][1] = _mm256_set1_ps(m[7] - m[5]);
+    planes[3][2] = _mm256_set1_ps(m[11] - m[9]);
+    planes[3][3] = _mm256_set1_ps(m[15] - m[13]);
+    planes[4][0] = _mm256_set1_ps(znear * m[3] + m[2]);
+    planes[4][1] = _mm256_set1_ps(znear * m[7] + m[6]);
+    planes[4][2] = _mm256_set1_ps(znear * m[11] + m[10]);
+    planes[4][3] = _mm256_set1_ps(znear * m[15] + m[14]);
+    planes[5][0] = _mm256_set1_ps(zfar * m[3] - m[2]);
+    planes[5][1] = _mm256_set1_ps(zfar * m[7] - m[6]);
+    planes[5][2] = _mm256_set1_ps(zfar * m[11] - m[10]);
+    planes[5][3] = _mm256_set1_ps(zfar * m[15] - m[14]);
 }
 
 void mat_frustum(
