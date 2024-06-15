@@ -19,6 +19,7 @@
 #include "tinycthread.h"
 #include "util.h"
 #include "world.h"
+#include "uthash.h"
 
 #define MAX_CHUNKS 8192
 #define MAX_PLAYERS 128
@@ -40,11 +41,14 @@
 #define WORKER_DONE 2
 
 typedef struct {
+    int p;
+    int q;
+} ChunkKey;
+typedef struct {
+    ChunkKey key;
     Map map;
     Map lights;
     SignList signs;
-    int p;
-    int q;
     int faces;
     int sign_faces;
     int dirty;
@@ -52,6 +56,7 @@ typedef struct {
     int maxy;
     GLuint buffer;
     GLuint sign_buffer;
+    UT_hash_handle hh;
 } Chunk;
 
 typedef struct {
@@ -569,10 +574,16 @@ Player *player_crosshair(Player *player) {
 }
 
 Chunk *find_chunk(int p, int q) {
+    Chunk* chunk;
+    ChunkKey key = {p, q};
+
+    // HASH_FIND(hh, (Chunk*)g->chunks, &key, sizeof(int) * 2, chunk);
+    // return chunk;
+
     //Surely we could use a hash map or some other way to more easily look up the chunk
     for (int i = 0; i < g->chunk_count; i++) {
         Chunk *chunk = g->chunks + i;
-        if (chunk->p == p && chunk->q == q) {
+        if (chunk->key.p == p && chunk->key.q == q) {
             return chunk;
         }
     }
@@ -580,8 +591,8 @@ Chunk *find_chunk(int p, int q) {
 }
 
 int chunk_distance(Chunk *chunk, int p, int q) {
-    int dp = ABS(chunk->p - p);
-    int dq = ABS(chunk->q - q);
+    int dp = ABS(chunk->key.p - p);
+    int dq = ABS(chunk->key.q - q);
     return MAX(dp, dq);
 }
 
@@ -892,7 +903,7 @@ int has_lights(Chunk *chunk) {
         for (int dq = -1; dq <= 1; dq++) {
             Chunk *other = chunk;
             if (dp || dq) {
-                other = find_chunk(chunk->p + dp, chunk->q + dq);
+                other = find_chunk(chunk->key.p + dp, chunk->key.q + dq);
             }
             if (!other) {
                 continue;
@@ -911,7 +922,7 @@ void dirty_chunk(Chunk *chunk) {
     if (has_lights(chunk)) {
         for (int dp = -1; dp <= 1; dp++) {
             for (int dq = -1; dq <= 1; dq++) {
-                Chunk *other = find_chunk(chunk->p + dp, chunk->q + dq);
+                Chunk *other = find_chunk(chunk->key.p + dp, chunk->key.q + dq);
                 if (other) {
                     other->dirty = 1;
                 }
@@ -1191,13 +1202,13 @@ void generate_chunk(Chunk *chunk, WorkerItem *item) {
 void gen_chunk_buffer(Chunk *chunk) {
     WorkerItem _item;
     WorkerItem *item = &_item;
-    item->p = chunk->p;
-    item->q = chunk->q;
+    item->p = chunk->key.p;
+    item->q = chunk->key.q;
     for (int dp = -1; dp <= 1; dp++) {
         for (int dq = -1; dq <= 1; dq++) {
             Chunk *other = chunk;
             if (dp || dq) {
-                other = find_chunk(chunk->p + dp, chunk->q + dq);
+                other = find_chunk(chunk->key.p + dp, chunk->key.q + dq);
             }
             if (other) {
                 item->block_maps[dp + 1][dq + 1] = &other->map;
@@ -1235,8 +1246,8 @@ void request_chunk(int p, int q) {
 }
 
 void init_chunk(Chunk *chunk, int p, int q) {
-    chunk->p = p;
-    chunk->q = q;
+    chunk->key.p = p;
+    chunk->key.q = q;
     chunk->faces = 0;
     chunk->sign_faces = 0;
     chunk->buffer = 0;
@@ -1252,6 +1263,9 @@ void init_chunk(Chunk *chunk, int p, int q) {
     int dz = q * CHUNK_SIZE - 1;
     map_alloc(block_map, dx, dy, dz, 0x7fff);
     map_alloc(light_map, dx, dy, dz, 0xf);
+
+    Chunk* ptr = g->chunks;
+    HASH_ADD(hh, ptr, key, sizeof(ChunkKey), chunk);
 }
 
 void create_chunk(Chunk *chunk, int p, int q) {
@@ -1259,8 +1273,8 @@ void create_chunk(Chunk *chunk, int p, int q) {
 
     WorkerItem _item;
     WorkerItem *item = &_item;
-    item->p = chunk->p;
-    item->q = chunk->q;
+    item->p = chunk->key.p;
+    item->q = chunk->key.q;
     item->block_maps[1][1] = &chunk->map;
     item->light_maps[1][1] = &chunk->lights;
     load_chunk(item);
@@ -1277,7 +1291,7 @@ void delete_chunks() {
     for (int i = 0; i < count; i++) {
         Chunk *chunk = g->chunks + i;
         int delete = 1;
-        for (int j = 0; j < 3; j++) {
+        for (int j = 0; j < 1; j++) {
             State *s = states[j];
             int p = chunked(s->x);
             int q = chunked(s->z);
@@ -1433,14 +1447,14 @@ void ensure_chunks_worker(Player *player, Worker *worker) {
         }
     }
     WorkerItem *item = &worker->item;
-    item->p = chunk->p;
-    item->q = chunk->q;
+    item->p = chunk->key.p;
+    item->q = chunk->key.q;
     item->load = load;
     for (int dp = -1; dp <= 1; dp++) {
         for (int dq = -1; dq <= 1; dq++) {
             Chunk *other = chunk;
             if (dp || dq) {
-                other = find_chunk(chunk->p + dp, chunk->q + dq);
+                other = find_chunk(chunk->key.p + dp, chunk->key.q + dq);
             }
             if (other) {
                 Map *block_map = malloc(sizeof(Map));
@@ -1680,7 +1694,7 @@ int render_chunks(Attrib *attrib, Player *player) {
             continue;
         }
         if (!chunk_visible(
-            planes, chunk->p, chunk->q, chunk->miny, chunk->maxy))
+            planes, chunk->key.p, chunk->key.q, chunk->miny, chunk->maxy))
         {
             continue;
         }
@@ -1710,7 +1724,7 @@ void render_signs(Attrib *attrib, Player *player) {
             continue;
         }
         if (!chunk_visible(
-            planes, chunk->p, chunk->q, chunk->miny, chunk->maxy))
+            planes, chunk->key.p, chunk->key.q, chunk->miny, chunk->maxy))
         {
             continue;
         }
@@ -2826,6 +2840,10 @@ int main(int argc, char **argv) {
             s->y = highest_block(s->x, s->z) + 2;
         }
 
+        
+        int chunked_p = 0;
+        int chunked_q = 0;
+
         // BEGIN MAIN LOOP //
         double previous = glfwGetTime();
         while (1) {
@@ -2876,15 +2894,26 @@ int main(int argc, char **argv) {
             // PREPARE TO RENDER //
             g->observe1 = g->observe1 % g->player_count;
             g->observe2 = g->observe2 % g->player_count;
-            delete_chunks();
 
-            //TODO: ENABLE THIS AGAIN
+             //TODO: ENABLE THIS AGAIN
             del_buffer(me->buffer);
             me->buffer = gen_player_buffer(s->x, s->y, s->z, s->rx, s->ry);
             for (int i = 1; i < g->player_count; i++) {
                 interpolate_player(g->players + i);
             }
             Player *player = g->players + g->observe1;
+
+            // UPDATE CHUNKED POS // 
+            int n_chunked_p = chunked(player->state.x);
+            int n_chunked_q = chunked(player->state.z);
+            if(n_chunked_p != chunked_p || n_chunked_q != chunked_q){
+                chunked_p = n_chunked_p;
+                chunked_q = n_chunked_q;
+                
+
+            }
+            delete_chunks();
+           
 
             // RENDER 3-D SCENE //
             glClear(GL_COLOR_BUFFER_BIT);
