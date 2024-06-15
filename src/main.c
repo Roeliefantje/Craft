@@ -21,7 +21,7 @@
 #include "world.h"
 #include "uthash.h"
 
-#define MAX_CHUNKS 8192
+#define MAX_CHUNKS DELETE_CHUNK_RADIUS * 2 * CREATE_CHUNK_RADIUS * 2
 #define MAX_PLAYERS 128
 #define WORKERS 4
 #define MAX_TEXT_LENGTH 256
@@ -118,6 +118,7 @@ typedef struct {
     GLuint extra2;
     GLuint extra3;
     GLuint extra4;
+    GLuint chunk_pos;
 } Attrib;
 
 typedef struct {
@@ -416,6 +417,7 @@ void draw_lines(Attrib *attrib, GLuint buffer, int components, int count) {
 
 void draw_chunk(Attrib *attrib, Chunk *chunk) {
     //Create own function to deal with custom data types
+    glUniform2f(attrib->chunk_pos, chunk->key.p, chunk->key.q);
     draw_chunk_triangles_3d_ao(attrib, chunk->buffer, chunk->faces * 6);
     //draw_triangles_3d_ao(attrib, chunk->buffer, chunk->faces * 6);
 }
@@ -1113,6 +1115,7 @@ void compute_chunk(WorkerItem *item) {
 
     // generate geometry
     // GLfloat *data = malloc_faces(10, faces);
+    //Size of VertexData * 6 for each face, as each face produces 6 vertices.
     VertexData *data = (VertexData *) malloc_faces_new(sizeof(VertexData) * 6, faces);
     int offset = 0;
     MAP_FOR_EACH(map, ex, ey, ez, ew) {
@@ -1179,6 +1182,7 @@ void compute_chunk(WorkerItem *item) {
                 f1, f2, f3, f4, f5, f6,
                 ex, ey, ez, 0.5, ew);
         }
+        //Offset is Total faces * 6, as the total amount of vertexdata increases by 6 for each face.
         offset += total * 6;
     } END_MAP_FOR_EACH;
 
@@ -2745,6 +2749,7 @@ int main(int argc, char **argv) {
     block_attrib.extra4 = glGetUniformLocation(program, "ortho");
     block_attrib.camera = glGetUniformLocation(program, "camera");
     block_attrib.timer = glGetUniformLocation(program, "timer");
+    block_attrib.chunk_pos = glGetUniformLocation(program, "chunk_pos");
 
     program = load_program(
         "shaders/line_vertex.glsl", "shaders/line_fragment.glsl");

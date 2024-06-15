@@ -193,10 +193,24 @@ void make_cube_faces_new(
         int flip = ao[i][0] + ao[i][3] > ao[i][1] + ao[i][2];
         for (int v = 0; v < 6; v++) {
             int j = flip ? flipped[i][v] : indices[i][v];
+            // int j = flip ? indices[i][v] : indices[i][v];
             VertexData vd;
-            vd.x = x + n * positions[i][j][0];
+            //print the x value
+            // vd.x = fmod(x + n * positions[i][j][0], 32);
+            // vd.x = fabs(fmodf(x, 32)) + n * positions[i][j][0];
+            float x_modulo = fmod(x, 32);
+            x_modulo < 0 ? x_modulo += 32 : x_modulo;
+            float z_modulo = fmod(z, 32);
+            z_modulo < 0 ? z_modulo += 32 : z_modulo;
+
+            vd.x = x_modulo + n * positions[i][j][0];
             vd.y = y + n * positions[i][j][1];
-            vd.z = z + n * positions[i][j][2];
+            // vd.z = fabs(fmodf(z, 32)) + n * positions[i][j][2];
+            vd.z = z_modulo + n * positions[i][j][2];
+
+            //print the vd.x value:
+            printf("vd.x: %f\n", vd.x);
+
             vd.diffuse_bake =  normals[i][0] * normalized_light_direction[0] + 
             normals[i][1] * normalized_light_direction[1] + 
             normals[i][2] * normalized_light_direction[2];
@@ -237,7 +251,7 @@ void make_cube_new(
     int wbottom = blocks[w][3];
     int wfront = blocks[w][4];
     int wback = blocks[w][5];
-    make_cube_faces(
+    make_cube_faces_new(
         data, ao, light,
         left, right, top, bottom, front, back,
         wleft, wright, wtop, wbottom, wfront, wback,
