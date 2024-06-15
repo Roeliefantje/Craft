@@ -124,6 +124,7 @@ typedef struct {
     GLFWwindow *window;
     Worker workers[WORKERS];
     Chunk chunks[MAX_CHUNKS];
+    Chunk *chunks_hash;
     int chunk_count;
     int create_radius;
     int render_radius;
@@ -577,8 +578,8 @@ Chunk *find_chunk(int p, int q) {
     Chunk* chunk;
     ChunkKey key = {p, q};
 
-    // HASH_FIND(hh, (Chunk*)g->chunks, &key, sizeof(int) * 2, chunk);
-    // return chunk;
+    HASH_FIND(hh, g->chunks_hash, &key, sizeof(int) * 2, chunk);
+    return chunk;
 
     //Surely we could use a hash map or some other way to more easily look up the chunk
     for (int i = 0; i < g->chunk_count; i++) {
@@ -1264,8 +1265,7 @@ void init_chunk(Chunk *chunk, int p, int q) {
     map_alloc(block_map, dx, dy, dz, 0x7fff);
     map_alloc(light_map, dx, dy, dz, 0xf);
 
-    Chunk* ptr = g->chunks;
-    HASH_ADD(hh, ptr, key, sizeof(ChunkKey), chunk);
+    HASH_ADD(hh, g->chunks_hash, key, sizeof(ChunkKey), chunk);
 }
 
 void create_chunk(Chunk *chunk, int p, int q) {
@@ -2629,6 +2629,7 @@ void parse_buffer(char *buffer) {
 
 void reset_model() {
     memset(g->chunks, 0, sizeof(Chunk) * MAX_CHUNKS);
+    g->chunks_hash = NULL;
     g->chunk_count = 0;
     memset(g->players, 0, sizeof(Player) * MAX_PLAYERS);
     g->player_count = 0;
