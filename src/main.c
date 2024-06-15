@@ -274,16 +274,16 @@ GLuint gen_cube_buffer(float x, float y, float z, float n, int w) {
         {0.5, 0.5, 0.5, 0.5}
     };
     //I dont get what ao is, it just leads to a buffer with zeroes everytime.
-    make_cube(data, ao, light, 1, 1, 1, 1, 1, 1, x, y, z, n, w);
+    make_cube_new(data, ao, light, 1, 1, 1, 1, 1, 1, x, y, z, n, w);
     return gen_faces(8, 6, data);
 }
 
 GLuint gen_plant_buffer(float x, float y, float z, float n, int w) {
-    GLfloat *data = malloc_faces(10, 4);
+    VertexData *data = malloc_faces_new(sizeof(VertexData), 4);
     float ao = 0;
     float light = 1;
-    make_plant(data, ao, light, x, y, z, n, w, 45);
-    return gen_faces(8, 4, data);
+    make_plant_new(data, ao, light, x, y, z, n, w, 45);
+    return gen_faces_new(sizeof(VertexData), 4, (void *) data);
 }
 
 GLuint gen_player_buffer(float x, float y, float z, float rx, float ry) {
@@ -1850,7 +1850,7 @@ void render_item(Attrib *attrib) {
     int w = items[g->item_index];
     if (is_plant(w)) {
         //IGNORE PLANTS FOR NOW
-        return;
+        //return;
         GLuint buffer = gen_plant_buffer(0, 0, 0, 0.5, w);
         draw_plant(attrib, buffer);
         del_buffer(buffer);
