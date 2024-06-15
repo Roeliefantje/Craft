@@ -32,6 +32,7 @@ void update_fps(FPS *fps);
 GLuint gen_buffer(GLsizei size, GLfloat *data);
 void del_buffer(GLuint buffer);
 GLfloat *malloc_faces(int components, int faces);
+void *malloc_faces_new( unsigned long long vertexDataSize, int faces);
 GLuint gen_faces(int components, int faces, GLfloat *data);
 GLuint make_shader(GLenum type, const char *source);
 GLuint load_shader(GLenum type, const char *path);

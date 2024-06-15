@@ -1112,7 +1112,8 @@ void compute_chunk(WorkerItem *item) {
     } END_MAP_FOR_EACH;
 
     // generate geometry
-    GLfloat *data = malloc_faces(10, faces);
+    // GLfloat *data = malloc_faces(10, faces);
+    VertexData *data = (VertexData *) malloc_faces_new(sizeof(VertexData) * 6, faces);
     int offset = 0;
     MAP_FOR_EACH(map, ex, ey, ez, ew) {
         if (ew <= 0) {
@@ -1168,17 +1169,17 @@ void compute_chunk(WorkerItem *item) {
                 }
             }
             float rotation = simplex2(ex, ez, 4, 0.5, 2) * 360;
-            make_plant(
+            make_plant_new(
                 data + offset, min_ao, max_light,
                 ex, ey, ez, 0.5, ew, rotation);
         }
         else {
-            make_cube(
+            make_cube_new(
                 data + offset, ao, light,
                 f1, f2, f3, f4, f5, f6,
                 ex, ey, ez, 0.5, ew);
         }
-        offset += total * 48;
+        offset += total * 6;
     } END_MAP_FOR_EACH;
 
     free(opaque);
