@@ -1846,8 +1846,8 @@ int worker_run(void *arg) {
         if (item->load) {
             load_chunk(item);
         }
-        compute_chunk(item);
-        //compute_chunk_greedy(item);
+        //compute_chunk(item);
+        compute_chunk_greedy(item);
         mtx_lock(&worker->mtx);
         worker->state = WORKER_DONE;
         mtx_unlock(&worker->mtx);
