@@ -51,6 +51,16 @@ GLuint gen_buffer(GLsizei size, GLfloat *data) {
     return buffer;
 }
 
+
+GLuint gen_buffer_new(GLsizei size, void* data) {
+    GLuint buffer;
+    glGenBuffers(1, &buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    return buffer;
+}
+
 void del_buffer(GLuint buffer) {
     glDeleteBuffers(1, &buffer);
 }
@@ -60,10 +70,21 @@ GLfloat *malloc_faces(int components, int faces) {
     return malloc(sizeof(GLfloat) * 6 * components * faces);
 }
 
+void *malloc_faces_new( unsigned long long vertexDataSize, int faces) {
+    return malloc(vertexDataSize * 6 * faces);
+}
+
 //6, because there is 6 vertices per face, components is the amount of floats in the data.
 GLuint gen_faces(int components, int faces, GLfloat *data) {
     GLuint buffer = gen_buffer(
         sizeof(GLfloat) * 6 * components * faces, data);
+    free(data);
+    return buffer;
+}
+
+GLuint gen_faces_new(unsigned long long  vertexDataSize, int faces, void * data) {
+    GLuint buffer = gen_buffer_new(
+        vertexDataSize * 6 * faces, data);
     free(data);
     return buffer;
 }

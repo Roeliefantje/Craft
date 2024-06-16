@@ -4,12 +4,15 @@ uniform mat4 matrix;
 uniform vec3 camera;
 uniform float fog_distance;
 uniform int ortho;
+uniform vec2 chunk_pos;
 
 in vec4 position;
+
 in float diffuse_bake;
 
 //in vec3 normal;
 in vec4 uv;
+in uint position_uint;
 
 out vec2 fragment_uv;
 out float fragment_ao;
@@ -17,6 +20,7 @@ out float fragment_light;
 out float fog_factor;
 out float fog_height;
 out float diffuse;
+out vec4 local_position;
 
 const float pi = 3.14159265;
 const vec3 light_direction = normalize(vec3(-1.0, 1.0, -1.0));
@@ -25,17 +29,26 @@ normalize(vec3(1,0,-1)), normalize(vec3(-1,0,1)), normalize(vec3(-1,0,-1)), norm
 
 vec3 decodeNormal(uint flag) {
     return normals[flag];
-    // if (flag == 0u) return vec3(-1, 0, 0);
-    // else if (flag == 1u) return vec3(1, 0, 0);
-    // else if (flag == 2u) return vec3(0, 1, 0);
-    // else if (flag == 3u) return vec3(0, -1, 0);
-    // else if (flag == 4u) return vec3(0, 0, -1);
-    // else if (flag == 5u) return vec3(0, 0, 1);
-    // else return vec3(0, 0, 0); // Should not happen
+}
+
+vec4 getPosition(uint pos) {
+
+
+    float x = int(pos >> 24);
+    float y = int(pos >> 16) & 0xFF;
+    float z = int(pos >> 8) & 0xFF;
+    return vec4(x, y, z, 1);
 }
 
 void main() {
-    gl_Position = matrix * position;
+    // int vertexIndex = gl_VertexID;
+    // vec4 position = getPosition(position_uint);
+    local_position = getPosition(position_uint);
+    //local_position = position;
+    // -0.5 to align back to original, doesnt really do anything but still
+    vec4 converted_position = (getPosition(position_uint) + vec4(chunk_pos.x * 32, 0.0, chunk_pos.y * 32, 0.0)) - vec4(0.5, 0.5, 0.5, 0);
+
+    gl_Position = matrix * converted_position;
     //vec3 normal = decodeNormal(normal_flag);
     fragment_uv = uv.xy;
     fragment_ao = 0.3 + (1.0 - uv.z) * 0.7;
@@ -47,10 +60,10 @@ void main() {
         fog_height = 0.0;
     }
     else {
-        float camera_distance = distance(camera, vec3(position));
+        float camera_distance = distance(camera, vec3(converted_position));
         fog_factor = pow(clamp(camera_distance / fog_distance, 0.0, 1.0), 4.0);
-        float dy = position.y - camera.y;
-        float dx = distance(position.xz, camera.xz);
+        float dy = converted_position.y - camera.y;
+        float dx = distance(converted_position.xz, camera.xz);
         fog_height = (atan(dy, dx) + pi / 2) / pi;
     }
 }
