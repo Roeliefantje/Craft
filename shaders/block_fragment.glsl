@@ -12,6 +12,7 @@ varying float fragment_light;
 varying float fog_factor;
 varying float fog_height;
 varying float diffuse;
+varying vec4 local_position;
 
 const float pi = 3.14159265;
 
@@ -35,5 +36,9 @@ void main() {
     color = clamp(color * light * ao, vec3(0.0), vec3(1.0));
     vec3 sky_color = vec3(texture2D(sky_sampler, vec2(timer, fog_height)));
     color = mix(color, sky_color, fog_factor);
+    
+
     gl_FragColor = vec4(color, 1.0);
+    // gl_FragColor = vec4(local_position.y / 255, local_position.y / 255, local_position.y / 255, 1);
+    // gl_FragColor = vec4(local_position.x / 255, local_position.y / 255, local_position.z / 255, 1);
 }
