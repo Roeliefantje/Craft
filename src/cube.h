@@ -12,6 +12,12 @@ typedef struct {
     //unsigned int normal_flag;
 } VertexData;
 
+void make_cube_face_greedy(
+    VertexData *data, float ao[4], float light[4],
+    int face_dir, int w,
+    float x, float y, float z, float n,
+    float x_length, float y_length, float z_length);
+
 void make_cube_faces(
     float *data, float ao[6][4], float light[6][4],
     int left, int right, int top, int bottom, int front, int back,

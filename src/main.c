@@ -1051,6 +1051,268 @@ void light_fill(
     light_fill(opaque, light, x, y, z + 1, w, 0);
 }
 
+void compute_chunk_greedy(WorkerItem *item) {
+
+    char *opaque = (char *)calloc(XZ_SIZE * XZ_SIZE * Y_SIZE, sizeof(char));
+    char *light = (char *)calloc(XZ_SIZE * XZ_SIZE * Y_SIZE, sizeof(char));
+    char *highest = (char *)calloc(XZ_SIZE * XZ_SIZE, sizeof(char));
+
+    int ox = item->p * CHUNK_SIZE - CHUNK_SIZE - 1;
+    int oy = -1;
+    int oz = item->q * CHUNK_SIZE - CHUNK_SIZE - 1;
+
+    // check for lights
+    int has_light = 0;
+    if (SHOW_LIGHTS) {
+        for (int a = 0; a < 3; a++) {
+            for (int b = 0; b < 3; b++) {
+                Map *map = item->light_maps[a][b];
+                if (map && map->size) {
+                    has_light = 1;
+                    break;
+                }
+            }
+            if(has_light) break;
+        }
+    }
+
+    // populate opaque array
+    for (int a = 0; a < 3; a++) {
+        for (int b = 0; b < 3; b++) {
+            Map *map = item->block_maps[a][b];
+            if (!map) {
+                continue;
+            }
+            MAP_FOR_EACH(map, ex, ey, ez, ew) {
+                int x = ex - ox;
+                int y = ey - oy;
+                int z = ez - oz;
+                int w = ew;
+                // TODO: this should be unnecessary
+                if (x < 0 || y < 0 || z < 0) {
+                    continue;
+                }
+                if (x >= XZ_SIZE || y >= Y_SIZE || z >= XZ_SIZE) {
+                    continue;
+                }
+                // END TODO
+                opaque[XYZ(x, y, z)] = !is_transparent(w);
+                if (opaque[XYZ(x, y, z)]) {
+                    highest[XZ(x, z)] = MAX(highest[XZ(x, z)], y);
+                }
+            } END_MAP_FOR_EACH;
+        }
+    }
+
+    // flood fill light intensities
+    if (has_light) {
+        for (int a = 0; a < 3; a++) {
+            for (int b = 0; b < 3; b++) {
+                Map *map = item->light_maps[a][b];
+                if (!map) {
+                    continue;
+                }
+                MAP_FOR_EACH(map, ex, ey, ez, ew) {
+                    int x = ex - ox;
+                    int y = ey - oy;
+                    int z = ez - oz;
+                    light_fill(opaque, light, x, y, z, ew, 1);
+                } END_MAP_FOR_EACH;
+            }
+        }
+    }
+
+    Map *map = item->block_maps[1][1];
+    VertexData *data = (VertexData *) malloc_faces_new(sizeof(VertexData) * 6, 600);
+    int miny = 256;
+    int maxy = 0;
+    int faces = 0;
+    int offset = 0;
+
+    float ao[4] = {0};
+    for (int y = 0; y < 256; y++){
+        char covered[CHUNK_SIZE * CHUNK_SIZE] = {0};
+        for (int x = 0; x < CHUNK_SIZE; x++){
+            int ix = x * CHUNK_SIZE;
+            for (int z = 0; z < CHUNK_SIZE; z++){
+                int i = z + ix;
+
+                int xl = x + map->dx + 1;
+                int yl = y + map->dy + 1;
+                int zl = z + map->dz + 1;
+
+                int xw = xl - ox;
+                int yw = yl - oy;
+                int zw = zl - oz;
+
+                int w = map_get(map, xl,yl,zl);
+                // If already covered by greedy mesher, continue
+                if(covered[i] || !opaque[XYZ(xw,yw,zw)] || is_plant(w) || opaque[XYZ(xw,yw + 1,zw)]) continue;
+
+                covered[i] = 1;
+                // z-axes
+                float z_length = 1;
+                for(int zd = 1; zd < CHUNK_SIZE - z; zd++){
+                    int wd = map_get(map, xl,yl,zl + zd);
+                    if(covered[i + zd] || !opaque[XYZ(xw,yw,zw + zd)] || is_plant(wd) || opaque[XYZ(xw,yw + 1,zw + zd)]) break;
+
+                    z_length++;
+                    covered[i + zd] = 1;
+                }
+
+                // x-axes
+                float x_length = 1;
+                for ( int xd = 1; xd < CHUNK_SIZE - x; xd++)
+                {
+                    int valid = 1;
+
+                    // Check if all in next row is valid
+                    for(int z_row = 0; z_row < z_length; z_row++){
+                        int i_row = (x+ xd) * CHUNK_SIZE + (z + z_row);
+                        int wd = map_get(map, xl + xd, yl, zl + z_row);
+                        if(covered[i_row] || !opaque[XYZ(xw + xd, yw, zw + z_row)] || is_plant(wd) || opaque[XYZ(xw + xd, yw + 1, zw + z_row)]){
+                            valid = 0;
+                            break;
+                        }
+                    }
+                    if(valid == 0) break;
+                    x_length++;
+                    
+                    // All were valid, set to covered
+                    for(int z_row = 0; z_row < z_length; z_row++){
+                        int i_row = (x+ xd) * CHUNK_SIZE + (z + z_row);
+                        covered[i_row] = 1;
+                    }
+                }
+
+                float ao1[6][4];
+                float light1[6][4];
+                //make_cube_faces_new(data + offset, ao1, light1, 0,0,1,0,0,0,1,1,1,1,1,1,xw,yw,zw, .5f);
+                make_cube_face_greedy(data + offset, ao, ao, 2, w,xw,yw,zw, .5f, x_length, 0, z_length);
+                offset += 6;
+                faces++;
+                //z += z_length;
+            }
+        }
+    }
+
+    data = (VertexData*)realloc(data, sizeof(VertexData) * 6 * 6  * faces);
+    // count exposed faces
+    // int miny = 256;
+    // int maxy = 0;
+    // int faces = 0;
+    
+    // MAP_FOR_EACH(map, ex, ey, ez, ew) {
+    //     if (ew <= 0) {
+    //         continue;
+    //     }
+        
+    //     int x = ex - ox;
+    //     int y = ey - oy;
+    //     int z = ez - oz;
+    //     int f1 = !opaque[XYZ(x - 1, y, z)];
+    //     int f2 = !opaque[XYZ(x + 1, y, z)];
+    //     int f3 = !opaque[XYZ(x, y + 1, z)];
+    //     int f4 = !opaque[XYZ(x, y - 1, z)] && (ey > 0);
+    //     int f5 = !opaque[XYZ(x, y, z - 1)];
+    //     int f6 = !opaque[XYZ(x, y, z + 1)];
+    //     int total = f1 + f2 + f3 + f4 + f5 + f6;
+    //     if (total == 0) {
+    //         continue;
+    //     }
+    //     if (is_plant(ew)) {
+    //         //continue; //TODO: REMOVE THIS
+    //         total = 4;
+    //     }
+    //     miny = MIN(miny, ey);
+    //     maxy = MAX(maxy, ey);
+    //     faces += total;
+    // } END_MAP_FOR_EACH;
+
+    // generate geometry
+    // GLfloat *data = malloc_faces(10, faces);
+    //Size of VertexData * 6 for each face, as each face produces 6 vertices.
+    //VertexData *data = (VertexData *) malloc_faces_new(sizeof(VertexData) * 6, faces);
+    // int offset = 0;
+    // MAP_FOR_EACH(map, ex, ey, ez, ew) {
+    //     if (ew <= 0) {
+    //         continue;
+    //     }
+
+    //     int x = ex - ox;
+    //     int y = ey - oy;
+    //     int z = ez - oz;
+    //     int f1 = !opaque[XYZ(x - 1, y, z)];
+    //     int f2 = !opaque[XYZ(x + 1, y, z)];
+    //     int f3 = !opaque[XYZ(x, y + 1, z)];
+    //     int f4 = !opaque[XYZ(x, y - 1, z)] && (ey > 0);
+    //     int f5 = !opaque[XYZ(x, y, z - 1)];
+    //     int f6 = !opaque[XYZ(x, y, z + 1)];
+    //     int total = f1 + f2 + f3 + f4 + f5 + f6;
+    //     if (total == 0) {
+    //         continue;
+    //     }
+    //     char neighbors[27] = {0};
+    //     char lights[27] = {0};
+    //     float shades[27] = {0};
+    //     int index = 0;
+    //     for (int dx = -1; dx <= 1; dx++) {
+    //         for (int dy = -1; dy <= 1; dy++) {
+    //             for (int dz = -1; dz <= 1; dz++) {
+    //                 neighbors[index] = opaque[XYZ(x + dx, y + dy, z + dz)];
+    //                 lights[index] = light[XYZ(x + dx, y + dy, z + dz)];
+    //                 shades[index] = 0;
+    //                 if (y + dy <= highest[XZ(x + dx, z + dz)]) {
+    //                     for (int oy = 0; oy < 8; oy++) {
+    //                         if (opaque[XYZ(x + dx, y + dy + oy, z + dz)]) {
+    //                             shades[index] = 1.0 - oy * 0.125;
+    //                             break;
+    //                         }
+    //                     }
+    //                 }
+    //                 index++;
+    //             }
+    //         }
+    //     }
+    //     float ao[6][4];
+    //     float light[6][4];
+    //     occlusion(neighbors, lights, shades, ao, light);
+    //     if (is_plant(ew)) {
+    //         //continue;
+    //         total = 4;
+    //         float min_ao = 1;
+    //         float max_light = 0;
+    //         for (int a = 0; a < 6; a++) {
+    //             for (int b = 0; b < 4; b++) {
+    //                 min_ao = MIN(min_ao, ao[a][b]);
+    //                 max_light = MAX(max_light, light[a][b]);
+    //             }
+    //         }
+    //         float rotation = simplex2(ex, ez, 4, 0.5, 2) * 360;
+    //         make_plant_new(
+    //             data + offset, min_ao, max_light,
+    //             ex, ey, ez, 0.5, ew, rotation);
+    //     }
+    //     else {
+    //         make_cube_new(
+    //             data + offset, ao, light,
+    //             f1, f2, f3, f4, f5, f6,
+    //             ex, ey, ez, 0.5, ew);
+    //     }
+    //     //Offset is Total faces * 6, as the total amount of vertexdata increases by 6 for each face.
+    //     offset += total * 6;
+    // } END_MAP_FOR_EACH;
+
+    free(opaque);
+    free(light);
+    free(highest);
+
+    item->miny = miny;
+    item->maxy = maxy;
+    item->faces = faces;
+    item->data = data;
+}
+
 void compute_chunk(WorkerItem *item) {
     char *opaque = (char *)calloc(XZ_SIZE * XZ_SIZE * Y_SIZE, sizeof(char));
     char *light = (char *)calloc(XZ_SIZE * XZ_SIZE * Y_SIZE, sizeof(char));
@@ -1068,8 +1330,10 @@ void compute_chunk(WorkerItem *item) {
                 Map *map = item->light_maps[a][b];
                 if (map && map->size) {
                     has_light = 1;
+                    break;
                 }
             }
+            if(has_light) break;
         }
     }
 
@@ -1551,7 +1815,8 @@ int worker_run(void *arg) {
         if (item->load) {
             load_chunk(item);
         }
-        compute_chunk(item);
+        //compute_chunk(item);
+        compute_chunk_greedy(item);
         mtx_lock(&worker->mtx);
         worker->state = WORKER_DONE;
         mtx_unlock(&worker->mtx);
@@ -2782,6 +3047,7 @@ int main(int argc, char **argv) {
     printf( "block_attrib.normal = %d\n", block_attrib.normal );
     printf( "block_attrib.uv = %d\n", block_attrib.uv );
     printf( "block_attrib.position_uint = %d\n", block_attrib.position_uint );
+    printf("HELLOOOOO \n");
 
     block_attrib.matrix = glGetUniformLocation(program, "matrix");
     block_attrib.sampler = glGetUniformLocation(program, "sampler");
@@ -2846,6 +3112,9 @@ int main(int argc, char **argv) {
         thrd_create(&worker->thrd, worker_run, worker);
     }
 
+    //WIREFRAMEMODE
+    int wire = 0;
+
     // OUTER LOOP //
     int running = 1;
     while (running) {
@@ -2898,6 +3167,10 @@ int main(int argc, char **argv) {
         // BEGIN MAIN LOOP //
         double previous = glfwGetTime();
         while (1) {
+
+            // HANDLE WIREFRAME TOGGLE
+            glfwGetKey(g->window, 'U')? glPolygonMode( GL_FRONT_AND_BACK, GL_LINE ): glPolygonMode( GL_FRONT_AND_BACK, GL_FILL  );
+
             // WINDOW SIZE AND SCALE //
             g->scale = get_scale_factor();
             glfwGetFramebufferSize(g->window, &g->width, &g->height);

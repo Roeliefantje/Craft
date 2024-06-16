@@ -6,6 +6,110 @@
 
 const float normalized_light_direction[3] = { -0.577350f, 0.577350f, -0.577350f };
 
+void make_cube_face_greedy(
+    VertexData *data, float ao[4], float light[4],
+    int face_dir, int w,
+    float x, float y, float z, float n,
+    float x_length, float y_length, float z_length)
+{
+    static const float positions[6][3] = { // int faces[6] = {left, right, top, bottom, front, back};
+        {-1,-1,-1},
+        {+1,-1, -1},
+        {-1, +1, -1},
+        {-1, -1, -1},
+        {-1, -1, -1},
+        {-1, -1, +1},
+    };
+    static const float offsets[6][6][3] = {
+        {{1, 0, 0}, {0, 0, 1}, {1, 0, 1},{+1, -1, +1}, {+1, +1, -1}, {+1, +1, +1}},
+        {{+1, -1, +1}, {+1, +1, -1}, {+1, +1, +1},{+1, -1, +1}, {+1, +1, -1}, {+1, +1, +1}},
+        {{1, 0, 0}, {1, 0, 1}, {0, 0, 0}, {0, 0, 0}, {1, 0, 1}, {0, 0, 1}},
+        {{-1, -1, +1}, {+1, -1, -1}, {+1, -1, +1},{+1, -1, +1}, {+1, +1, -1}, {+1, +1, +1}},
+        {{-1, +1, -1}, {+1, -1, -1}, {+1, +1, -1},{+1, -1, +1}, {+1, +1, -1}, {+1, +1, +1}},
+        {{-1, +1, +1}, {+1, -1, +1}, {+1, +1, +1},{+1, -1, +1}, {+1, +1, -1}, {+1, +1, +1}}
+    };
+    static const float normals[6][3] = {
+        {-1, 0, 0},
+        {+1, 0, 0},
+        {0, +1, 0},
+        {0, -1, 0},
+        {0, 0, -1},
+        {0, 0, +1}
+    };
+
+    static const unsigned int normal_flags[6] = {
+        0, 1, 2, 3, 4, 5,
+    };
+
+
+    static const float uvs[6][4][2] = {
+        {{0, 0}, {1, 0}, {0, 1}, {1, 1}},
+        {{1, 0}, {0, 0}, {1, 1}, {0, 1}},
+        {{0, 1}, {0, 0}, {1, 1}, {1, 0}},
+        {{0, 0}, {0, 1}, {1, 0}, {1, 1}},
+        {{0, 0}, {0, 1}, {1, 0}, {1, 1}},
+        {{1, 0}, {1, 1}, {0, 0}, {0, 1}}
+    };
+    static const float indices[6][6] = {
+        {0, 3, 2, 0, 1, 3},
+        {0, 3, 1, 0, 2, 3},
+        {0, 3, 2, 0, 1, 3},
+        {0, 3, 1, 0, 2, 3},
+        {0, 3, 2, 0, 1, 3},
+        {0, 3, 1, 0, 2, 3}
+    };
+    static const float flipped[6][6] = {
+        {0, 1, 2, 1, 3, 2},
+        {0, 2, 1, 2, 3, 1},
+        {0, 1, 2, 1, 3, 2},
+        {0, 2, 1, 2, 3, 1},
+        {0, 1, 2, 1, 3, 2},
+        {0, 2, 1, 2, 3, 1}
+    };
+    //float *d = data;
+    VertexData *vdp = (VertexData*)data;
+    float s = 0.0625;
+    float a = 0 + 1 / 2048.0;
+    float b = s - 1 / 2048.0;
+    // int faces[6] = {left, right, top, bottom, front, back};
+    // int tiles[6] = {wleft, wright, wtop, wbottom, wfront, wback};
+    float du = (w % 16) * s;
+    float dv = (w / 16) * s;
+    int flip = ao[0] + ao[3] > ao[1] + ao[2];
+    for (int v = 5; v >= 0; v--) {
+        int j = flip ? flipped[face_dir][v] : indices[face_dir][v];
+        VertexData vd;
+
+        float x_modulo = fmod(x, 32);
+        x_modulo < 1 ? x_modulo += 32 : x_modulo;
+        float z_modulo = fmod(z, 32);
+        z_modulo < 1 ? z_modulo += 32 : z_modulo;
+
+        float pos[3] ={
+            ((n * positions[face_dir][0]) + (offsets[face_dir][v][0] * x_length - n)),
+            ((n * positions[face_dir][1]) + (offsets[face_dir][v][1] * y_length - n)),
+            ((n * positions[face_dir][2]) + (offsets[face_dir][v][2] * z_length - n)),
+        };
+        unsigned int xi = x_modulo + pos[0] + 0.5;
+        unsigned int yi = y + pos[1] + 0.5;
+        unsigned int zi = z_modulo + pos[2] + 0.5;
+
+
+        vd.xyz = ((xi & 0xFF) << 24) | ((yi & 0xFF) << 16) | ((zi & 0xFF) << 8);
+
+
+        vd.diffuse_bake =  normals[face_dir][0] * normalized_light_direction[0] + 
+        normals[face_dir][1] * normalized_light_direction[1] + 
+        normals[face_dir][2] * normalized_light_direction[2];
+
+        vd.u = du + (uvs[face_dir][j][0] ? b : a);
+        vd.v = dv + (uvs[face_dir][j][1] ? b : a);
+        vd.t = ao[j];
+        vd.s = light[j];
+        *(vdp++) = vd;
+    }
+}
+
 void make_cube_faces_new(
     VertexData *data, float ao[6][4], float light[6][4],
     int left, int right, int top, int bottom, int front, int back,
