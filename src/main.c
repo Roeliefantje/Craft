@@ -22,7 +22,7 @@
 #include "uthash.h"
 #include <immintrin.h>
 
-#define MAX_CHUNKS DELETE_CHUNK_RADIUS * 2 * CREATE_CHUNK_RADIUS * 2
+#define MAX_CHUNKS DELETE_CHUNK_RADIUS * 2 * DELETE_CHUNK_RADIUS * 2
 #define MAX_PLAYERS 128
 #define WORKERS 4
 #define MAX_TEXT_LENGTH 256
@@ -587,17 +587,11 @@ Chunk *find_chunk(int p, int q) {
     Chunk* chunk;
     ChunkKey key = {p, q};
 
-    HASH_FIND(hh, g->chunks_hash, &key, sizeof(int) * 2, chunk);
-    return chunk;
+    // printf("Key to find: %d, %d\n", key.p, key.q);
 
-    //Surely we could use a hash map or some other way to more easily look up the chunk
-    for (int i = 0; i < g->chunk_count; i++) {
-        Chunk *chunk = g->chunks + i;
-        if (chunk->key.p == p && chunk->key.q == q) {
-            return chunk;
-        }
-    }
-    return 0;
+    HASH_FIND(hh, g->chunks_hash, &key, sizeof(int) * 2, chunk);
+    // printf("Key found\n");
+    return chunk;
 }
 
 int chunk_distance(Chunk *chunk, int p, int q) {
@@ -1652,7 +1646,11 @@ void delete_chunks() {
             del_buffer(chunk->buffer);
             del_buffer(chunk->sign_buffer);
             Chunk *other = g->chunks + (--count);
+
+            //Reset the hashmap for the chunk thats getting moved ot the chunk position.
+            HASH_DEL(g->chunks_hash, other);
             memcpy(chunk, other, sizeof(Chunk));
+            HASH_ADD(hh, g->chunks_hash, key, sizeof(ChunkKey), chunk);
         }
     }
     g->chunk_count = count;
@@ -1824,6 +1822,7 @@ void ensure_chunks_worker(Player *player, Worker *worker) {
 void ensure_chunks(Player *player) {
     check_workers();
     force_chunks(player);
+
     for (int i = 0; i < WORKERS; i++) {
         Worker *worker = g->workers + i;
         mtx_lock(&worker->mtx);
@@ -3247,12 +3246,11 @@ int main(int argc, char **argv) {
                 last_update = now;
                 client_position(s->x, s->y, s->z, s->rx, s->ry);
             }
-
+//FREEZE SOMEWHERE HERE
             // PREPARE TO RENDER //
             g->observe1 = g->observe1 % g->player_count;
             g->observe2 = g->observe2 % g->player_count;
 
-             //TODO: ENABLE THIS AGAIN
             del_buffer(me->buffer);
             me->buffer = gen_player_buffer(s->x, s->y, s->z, s->rx, s->ry);
             for (int i = 1; i < g->player_count; i++) {
@@ -3266,8 +3264,6 @@ int main(int argc, char **argv) {
             if(n_chunked_p != chunked_p || n_chunked_q != chunked_q){
                 chunked_p = n_chunked_p;
                 chunked_q = n_chunked_q;
-                
-
             }
             delete_chunks();
            
@@ -3286,7 +3282,6 @@ int main(int argc, char **argv) {
             if (SHOW_WIREFRAME) {
                 render_wireframe(&line_attrib, player);
             }
-
             // RENDER HUD //
             glClear(GL_DEPTH_BUFFER_BIT);
             if (SHOW_CROSSHAIRS) {
@@ -3296,7 +3291,7 @@ int main(int argc, char **argv) {
                 //TODO: TURN ON SHOW ITEM AGAIN
                 render_item(&block_attrib);
             }
-
+//END OF FREEZE
             // RENDER TEXT //
             char text_buffer[1024];
             float ts = 12 * g->scale;
@@ -3343,7 +3338,6 @@ int main(int argc, char **argv) {
                         other->name);
                 }
             }
-
             // RENDER PICTURE IN PICTURE //
             if (g->observe2) {
                 player = g->players + g->observe2;
@@ -3365,7 +3359,7 @@ int main(int argc, char **argv) {
                 g->width = pw;
                 g->height = ph;
                 g->ortho = 0;
-                g->fov = 65;
+                g->fov = 114;
 
                 render_sky(&sky_attrib, player, sky_buffer);
                 glClear(GL_DEPTH_BUFFER_BIT);
@@ -3378,7 +3372,6 @@ int main(int argc, char **argv) {
                         pw / 2, ts, ts, player->name);
                 }
             }
-
             // SWAP AND POLL //
             glfwSwapBuffers(g->window);
             glfwPollEvents();
