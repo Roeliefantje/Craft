@@ -120,6 +120,7 @@ typedef struct {
     GLuint extra4;
     GLuint chunk_pos;
     GLuint position_uint;
+    GLuint uvts;
 } Attrib;
 
 typedef struct {
@@ -275,7 +276,7 @@ GLuint gen_cube_buffer(float x, float y, float z, float n, int w) {
         {0.5, 0.5, 0.5, 0.5}
     };
     //I dont get what ao is, it just leads to a buffer with zeroes everytime.
-    make_cube_new((VertexData *)data, ao, light, 1, 1, 1, 1, 1, 1, x, y, z, n, w);
+    make_cube((VertexData *)data, ao, light, 1, 1, 1, 1, 1, 1, x, y, z, n, w);
     return gen_faces_new(sizeof(VertexData), 6, data);
 }
 
@@ -283,14 +284,15 @@ GLuint gen_plant_buffer(float x, float y, float z, float n, int w) {
     void *data = malloc_faces_new(sizeof(VertexData), 4);
     float ao = 0;
     float light = 1;
-    make_plant_new((VertexData *) data, ao, light, x, y, z, n, w, 45);
+    make_plant((VertexData *) data, ao, light, x, y, z, n, w, 45);
     return gen_faces_new(sizeof(VertexData), 4, data);
 }
 
 GLuint gen_player_buffer(float x, float y, float z, float rx, float ry) {
-    GLfloat *data = malloc_faces(10, 6);
+    // GLfloat *data = malloc_faces(10, 6);
+    VertexData *data = malloc_faces_new(sizeof(VertexData), 6);
     make_player(data, x, y, z, rx, ry);
-    return gen_faces(8, 6, data);
+    return gen_faces_new(sizeof(VertexData), 6, data);
 }
 
 GLuint gen_text_buffer(float x, float y, float n, char *text) {
@@ -306,36 +308,39 @@ GLuint gen_text_buffer(float x, float y, float n, char *text) {
 void draw_chunk_triangles_3d_ao(Attrib *attrib, GLuint buffer, int count) {
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
     //glEnableVertexAttribArray(attrib->position);
-    glEnableVertexAttribArray(attrib->normal);
-    glEnableVertexAttribArray(attrib->uv);
+    // glEnableVertexAttribArray(attrib->normal);
+    glEnableVertexAttribArray(attrib->uvts);
+    // glEnableVertexAttribArray(attrib->uv);
     glEnableVertexAttribArray(attrib->position_uint);
     
     
     // glVertexAttribPointer(attrib->position, 3, GL_FLOAT, GL_FALSE,
     //     sizeof(VertexData), 0);
     glVertexAttribPointer(attrib->position_uint, 1, GL_FLOAT, GL_FALSE, sizeof(VertexData), (GLvoid *)(offsetof(VertexData, xyz)));
+    glVertexAttribPointer(attrib->uvts, 1, GL_FLOAT, GL_FALSE, sizeof(VertexData), (GLvoid *)(offsetof(VertexData, uvts)));
     // glVertexAttribPointer(attrib->position, 1, GL_FLOAT, GL_FALSE,
     //     sizeof(VertexData), 0);
     
     //print size of VertexData:
     //printf("sizeof(VertexData) = %d\n", sizeof(VertexData));
 
-    glVertexAttribPointer(attrib->normal, 1, GL_FLOAT, GL_FALSE,
-        sizeof(VertexData), (GLvoid *)(offsetof(VertexData, diffuse_bake)));
+    // glVertexAttribPointer(attrib->normal, 1, GL_FLOAT, GL_FALSE,
+    //     sizeof(VertexData), (GLvoid *)(offsetof(VertexData, diffuse_bake)));
     // glVertexAttribPointer(attrib->normal, 3, GL_FLOAT, GL_FALSE,
     //     sizeof(VertexData), (GLvoid *)(offsetof(VertexData, normal_flag)));
 
     // glVertexAttribPointer(attrib->uv, 4, GL_FLOAT, GL_FALSE,
     //     sizeof(VertexData), (GLvoid *)(offsetof(VertexData, u)));
-    glVertexAttribPointer(attrib->uv, 4, GL_FLOAT, GL_FALSE,
-        sizeof(VertexData), (GLvoid *)(offsetof(VertexData, u)));
+    // glVertexAttribPointer(attrib->uv, 4, GL_FLOAT, GL_FALSE,
+    //     sizeof(VertexData), (GLvoid *)(offsetof(VertexData, u)));
 
     
 
     glDrawArrays(GL_TRIANGLES, 0, count);
     //glDisableVertexAttribArray(attrib->position);
-    glDisableVertexAttribArray(attrib->normal);
-    glDisableVertexAttribArray(attrib->uv);
+    // glDisableVertexAttribArray(attrib->normal);
+    glDisableVertexAttribArray(attrib->uvts);
+    // glDisableVertexAttribArray(attrib->uv);
     glDisableVertexAttribArray(attrib->position_uint);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
@@ -1176,12 +1181,12 @@ void compute_chunk(WorkerItem *item) {
                 }
             }
             float rotation = simplex2(ex, ez, 4, 0.5, 2) * 360;
-            make_plant_new(
+            make_plant(
                 data + offset, min_ao, max_light,
                 ex, ey, ez, 0.5, ew, rotation);
         }
         else {
-            make_cube_new(
+            make_cube(
                 data + offset, ao, light,
                 f1, f2, f3, f4, f5, f6,
                 ex, ey, ez, 0.5, ew);
@@ -2738,11 +2743,12 @@ int main(int argc, char **argv) {
         "shaders/block_vertex.glsl", "shaders/block_fragment.glsl");
     block_attrib.program = program;
     block_attrib.position = glGetAttribLocation(program, "position");
+    block_attrib.uvts = glGetAttribLocation(program, "uvts");
     block_attrib.normal = glGetAttribLocation(program, "diffuse_bake");
     block_attrib.uv = glGetAttribLocation(program, "uv");
     block_attrib.position_uint = glGetAttribLocation(program, "position_uint");
     printf( "block_attrib.position = %d\n", block_attrib.position );
-    printf( "block_attrib.normal = %d\n", block_attrib.normal );
+    printf( "block_attrib.uvts = %d\n", block_attrib.uvts );
     printf( "block_attrib.uv = %d\n", block_attrib.uv );
     printf( "block_attrib.position_uint = %d\n", block_attrib.position_uint );
 
