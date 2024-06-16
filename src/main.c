@@ -1124,7 +1124,7 @@ void compute_chunk_greedy(WorkerItem *item) {
     }
 
     Map *map = item->block_maps[1][1];
-    VertexData *data = (VertexData *) malloc_faces_new(sizeof(VertexData) * 6, CHUNK_SIZE * CHUNK_SIZE * 256 /2);
+    VertexData *data = (VertexData *) malloc_faces_new(sizeof(VertexData) * 6, CHUNK_SIZE * CHUNK_SIZE * 256 /4);
     int miny = 256;
     int maxy = 0;
     int faces = 0;

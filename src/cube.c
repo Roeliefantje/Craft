@@ -23,7 +23,7 @@ void make_cube_face_greedy(
     static const float offsets[6][6][3] = {
         {{0, 0, 0}, {0, 1, 1}, {0, 1, 0},{0, 0, 1}, {0, 1, 1}, {0, 0, 0}},
         {{+1, -1, +1}, {+1, +1, -1}, {+1, +1, +1},{+1, -1, +1}, {+1, +1, -1}, {+1, +1, +1}},
-        {{0, 0, 0}, {1, 0, 1}, {1, 0, 0}, {0, 0, 1}, {1, 0, 1}, {0, 0, 0}},
+        {{0, 0, 0}, {1, 0, 1}, {1, 0, 0}, {0, 0, 0}, {0, 0, 1}, {1, 0, 1}},
         {{1, 0, 0}, {1, 0, 1}, {0, 0, 0}, {0, 0, 0}, {1, 0, 1}, {0, 0, 1}},
         {{-1, +1, -1}, {+1, -1, -1}, {+1, +1, -1},{+1, -1, +1}, {+1, +1, -1}, {+1, +1, +1}},
         {{-1, +1, +1}, {+1, -1, +1}, {+1, +1, +1},{+1, -1, +1}, {+1, +1, -1}, {+1, +1, +1}}
@@ -99,10 +99,8 @@ void make_cube_face_greedy(
 
         vdp->xyz = ((xi & 0xFF) << 24) | ((yi & 0xFF) << 16) | ((zi & 0xFF) << 8) | normal_flags[face_dir];
 
-
-        //vd.diffuse_bake =  normals[face_dir][0] * normalized_light_direction[0] + 
-        int u = dui + (uvs[face_dir][j][0] ? 1 : 0); //MAXVALUE = 15, 4 bits
-        int v = dvi + (uvs[face_dir][j][1] ? 1 : 0); //MAXVALUE = 15, 4 bits
+        int u = dui + (uvs[face_dir][j][0] ? 1 : 0) * x_length; //MAXVALUE = 15, 4 bits
+        int v = dvi + (uvs[face_dir][j][1] ? 1 : 0) * z_length; //MAXVALUE = 15, 4 bits
         int t = ao[j] * 2; //MAXVALUE = 2, 2 bits 
         int s = light[j] * 16; //MAXVALUE = 15 4 bits
 
