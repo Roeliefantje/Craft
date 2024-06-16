@@ -67,7 +67,6 @@ void make_cube_face_greedy(
         {0, 2, 1, 2, 3, 1}
     };
     //float *d = data;
-    VertexData *vdp = (VertexData*)data;
     float s = 0.0625;
     float a = 0 + 1 / 2048.0;
     float b = s - 1 / 2048.0;
@@ -75,10 +74,13 @@ void make_cube_face_greedy(
     // int tiles[6] = {wleft, wright, wtop, wbottom, wfront, wback};
     float du = (w % 16) * s;
     float dv = (w / 16) * s;
+    int dui = (w % 16);
+    int dvi = (w / 16);
+    VertexData *vdp = (VertexData*)data;
+
     int flip = ao[0] + ao[3] > ao[1] + ao[2];
     for (int v = 0; v < 6; v++) {
         int j = flip ? flipped[face_dir][v] : indices[face_dir][v];
-        VertexData vd;
 
         float x_modulo = fmod(x, 32);
         x_modulo < 1 ? x_modulo += 32 : x_modulo;
@@ -95,22 +97,21 @@ void make_cube_face_greedy(
         unsigned int zi = z_modulo + pos[2] + 0.5;
 
 
-        vd.xyz = ((xi & 0xFF) << 24) | ((yi & 0xFF) << 16) | ((zi & 0xFF) << 8);
+        vdp->xyz = ((xi & 0xFF) << 24) | ((yi & 0xFF) << 16) | ((zi & 0xFF) << 8) | normal_flags[face_dir];
 
 
-        vd.diffuse_bake =  normals[face_dir][0] * normalized_light_direction[0] + 
-        normals[face_dir][1] * normalized_light_direction[1] + 
-        normals[face_dir][2] * normalized_light_direction[2];
+        //vd.diffuse_bake =  normals[face_dir][0] * normalized_light_direction[0] + 
+        int u = dui + (uvs[face_dir][j][0] ? 1 : 0); //MAXVALUE = 15, 4 bits
+        int v = dvi + (uvs[face_dir][j][1] ? 1 : 0); //MAXVALUE = 15, 4 bits
+        int t = ao[j] * 2; //MAXVALUE = 2, 2 bits 
+        int s = light[j] * 16; //MAXVALUE = 15 4 bits
 
-        vd.u = du + (uvs[face_dir][j][0] ? b : a) * x_length;
-        vd.v = dv + (uvs[face_dir][j][1] ? b : a) * z_length;
-        vd.t = ao[j];
-        vd.s = light[j];
-        *(vdp++) = vd;
+        vdp->uvts = ((u & 0xFF) << 24) | ((v & 0xFF) << 16) | ((t & 0xFF) << 8) | s;
+        *(vdp++);
     }
 }
 
-void make_cube_faces_new(
+void make_cube_faces(
     VertexData *data, float ao[6][4], float light[6][4],
     int left, int right, int top, int bottom, int front, int back,
     int wleft, int wright, int wtop, int wbottom, int wfront, int wback,
@@ -173,72 +174,38 @@ void make_cube_faces_new(
         if (faces[i] == 0) {
             continue;
         }
+        
         float du = (tiles[i] % 16) * s;
         float dv = (tiles[i] / 16) * s;
+        int dui = (tiles[i] % 16);
+        int dvi = (tiles[i] / 16);
+
         int flip = ao[i][0] + ao[i][3] > ao[i][1] + ao[i][2];
         for (int v = 0; v < 6; v++) {
             int j = flip ? flipped[i][v] : indices[i][v];
-            VertexData vd;
-            //print the x value
-            // vd.x = fmod(x + n * positions[i][j][0], 32);
-            // vd.x = fabs(fmodf(x, 32)) + n * positions[i][j][0];
             float x_modulo = fmod(x, 32);
             x_modulo < 0 ? x_modulo += 32 : x_modulo;
             float z_modulo = fmod(z, 32);
             z_modulo < 0 ? z_modulo += 32 : z_modulo;
 
+            unsigned int xi = x_modulo + n * positions[i][j][0] + 0.5; //MAX VALUE 31, 5 bits
+            unsigned int yi = y + n * positions[i][j][1] + 0.5; //MAX VALUE 254, 8 bits
+            unsigned int zi = z_modulo + n * positions[i][j][2] + 0.5; //MAX VALUE 31, 5 bits
+                                                          //Normal flags MAX VALUE 10, 4 bits
+            vdp->xyz = ((xi & 0xFF) << 24) | ((yi & 0xFF) << 16) | ((zi & 0xFF) << 8) | normal_flags[i];
+            int u = dui + (uvs[i][j][0] ? 1 : 0); //MAXVALUE = 15, 4 bits
+            int v = dvi + (uvs[i][j][1] ? 1 : 0); //MAXVALUE = 15, 4 bits
+            int t = ao[i][j] * 2; //MAXVALUE = 2, 2 bits 
+            int s = light[i][j] * 16; //MAXVALUE = 15 4 bits
+
+            vdp->uvts = ((u & 0xFF) << 24) | ((v & 0xFF) << 16) | ((t & 0xFF) << 8) | s;
             
-
-            // vd.x = x_modulo + n * positions[i][j][0];
-            // vd.y = y + n * positions[i][j][1];
-            // // vd.z = fabs(fmodf(z, 32)) + n * positions[i][j][2];
-            // vd.z = z_modulo + n * positions[i][j][2];
-            
-            unsigned int xi = x_modulo + n * positions[i][j][0] + 0.5;
-            unsigned int yi = y + n * positions[i][j][1] + 0.5;
-            unsigned int zi = z_modulo + n * positions[i][j][2] + 0.5;
-
-            // printf("X value: %d\n", x);
-            // printf("Y value: %d\n", y);
-            // printf("Float value y: %f\n", vd.y);
-            // printf("Z value: %d\n", z);
-            //print X value converted to int:
-
-
-            vd.xyz = ((xi & 0xFF) << 24) | ((yi & 0xFF) << 16) | ((zi & 0xFF) << 8);
-
-            //printf("xyz: %u\n", vd.xyz); 
-
-            vd.diffuse_bake =  normals[i][0] * normalized_light_direction[0] + 
-            normals[i][1] * normalized_light_direction[1] + 
-            normals[i][2] * normalized_light_direction[2];
-            // vd.nx = normals[i][0];
-            // vd.ny = normals[i][1];
-            // vd.nz = normals[i][2];
-            vd.u = du + (uvs[i][j][0] ? b : a);
-            vd.v = dv + (uvs[i][j][1] ? b : a);
-            vd.t = ao[i][j];
-            vd.s = light[i][j];
-            *(vdp++) = vd;
+            *(vdp++);
         }
-        // for (int v = 0; v < 6; v++) {
-        //     int j = flip ? flipped[i][v] : indices[i][v];
-        //     *(d++) = x + n * positions[i][j][0];
-        //     *(d++) = y + n * positions[i][j][1];
-        //     *(d++) = z + n * positions[i][j][2];
-        //     //*(unsigned char*)(d++) = normal_flags[i]; 
-        //     *(d++) = normals[i][0];
-        //     *(d++) = normals[i][1];
-        //     *(d++) = normals[i][2];
-        //     *(d++) = du + (uvs[i][j][0] ? b : a);
-        //     *(d++) = dv + (uvs[i][j][1] ? b : a);
-        //     *(d++) = ao[i][j];
-        //     *(d++) = light[i][j];
-        // }
     }
 }
 
-void make_cube_new(
+void make_cube(
     VertexData *data, float ao[6][4], float light[6][4],
     int left, int right, int top, int bottom, int front, int back,
     float x, float y, float z, float n, int w)
@@ -249,14 +216,14 @@ void make_cube_new(
     int wbottom = blocks[w][3];
     int wfront = blocks[w][4];
     int wback = blocks[w][5];
-    make_cube_faces_new(
+    make_cube_faces(
         data, ao, light,
         left, right, top, bottom, front, back,
         wleft, wright, wtop, wbottom, wfront, wback,
         x, y, z, n);
 }
 
-void make_plant_new(
+void make_plant(
     VertexData *data, float ao, float light,
     float px, float py, float pz, float n, int w, float rotation)
 {
@@ -297,18 +264,18 @@ void make_plant_new(
     float b = s;
     float du = (plants[w] % 16) * s;
     float dv = (plants[w] / 16) * s;
+    int dui = (plants[w] % 16);
+    int dvi = (plants[w] / 16);
     // printf("Start of new plant\n");
     for (int i = 0; i < 4; i++) {
         // printf("Start of new face\n");
         for (int v = 0; v < 6; v++) {
             int j = indices[i][v];
-            VertexData vd;
 
             float px_m = fmod( px, 32);
             px_m < 0 ? px_m += 32 : px_m;
             float pz_m = fmod( pz, 32);
             pz_m < 0 ? pz_m += 32 : pz_m;
-            
 
             // printf("Float px: %f\n", px_m + n * positions[i][j][1]);
             // printf("Float py: %f\n", py + n * positions[i][j][1]);
@@ -320,38 +287,7 @@ void make_plant_new(
             // printf("int py: %d\n", pyi);
             // printf("int pz: %d\n", pzi);
 
-            vd.xyz = ((pxi & 0xFF) << 24) | ((pyi & 0xFF) << 16) | ((pzi & 0xFF) << 8);
-
-            // vd.x = n * positions[i][j][1];
-            // vd.y = n * positions[i][j][1];
-            // vd.z = n * positions[i][j][2];
-
-            float nm[3] = {normals[i][0], normals[i][1],normals[i][2]};
-            // rotate_y(nm, RADIANS(rotation));
-            vd.diffuse_bake =  nm[0] * normalized_light_direction[0] + 
-            nm[1] * normalized_light_direction[1] + 
-            nm[2] * normalized_light_direction[2];
-            // vd.nx = normals[i][0];
-            // vd.ny = normals[i][1];
-            // vd.nz = normals[i][2];
-            vd.u = du + (uvs[i][j][0] ? b : a);
-            vd.v = dv + (uvs[i][j][1] ? b : a);
-            vd.t = ao;
-            vd.s = light;
-            *(vdp++) = vd;
-
-
-
-            // *(d++) = n * positions[i][j][0];
-            // *(d++) = n * positions[i][j][1];
-            // *(d++) = n * positions[i][j][2];
-            // *(d++) = normals[i][0];
-            // *(d++) = normals[i][1];
-            // *(d++) = normals[i][2];
-            // *(d++) = du + (uvs[i][j][0] ? b : a);
-            // *(d++) = dv + (uvs[i][j][1] ? b : a);
-            // *(d++) = ao;
-            // *(d++) = light;
+            *(vdp++);
         }
     }
     float ma[16];
@@ -368,10 +304,9 @@ void make_plant_new(
 
 
 void make_player(
-    float *data,
+    VertexData *data,
     float x, float y, float z, float rx, float ry)
 {
-    //printf("making player");
     float ao[6][4] = {0};
     float light[6][4] = {
         {0.8, 0.8, 0.8, 0.8},
@@ -381,22 +316,11 @@ void make_player(
         {0.8, 0.8, 0.8, 0.8},
         {0.8, 0.8, 0.8, 0.8}
     };
-    make_cube_faces_new(
-        (VertexData*)data, ao, light,
+    make_cube_faces(
+        data, ao, light,
         1, 1, 1, 1, 1, 1,
         226, 224, 241, 209, 225, 227,
         0, 0, 0, 0.4);
-    float ma[16];
-    float mb[16];
-    mat_identity(ma);
-    mat_rotate(mb, 0, 1, 0, rx);
-    mat_multiply(ma, mb, ma);
-    mat_rotate(mb, cosf(rx), 0, sinf(rx), -ry);
-    mat_multiply(ma, mb, ma);
-    //mat_apply(data, ma, 36, 3, 10);
-    mat_translate(mb, x, y, z);
-    mat_multiply(ma, mb, ma);
-    mat_apply(data, ma, 36, 0, 10);
 }
 
 void make_cube_wireframe(float *data, float x, float y, float z, float n) {
