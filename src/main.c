@@ -22,7 +22,7 @@
 #include "uthash.h"
 #include <immintrin.h>
 
-#define MAX_CHUNKS DELETE_CHUNK_RADIUS * 2 * CREATE_CHUNK_RADIUS * 2
+#define MAX_CHUNKS DELETE_CHUNK_RADIUS * 2 * DELETE_CHUNK_RADIUS * 2
 #define MAX_PLAYERS 128
 #define WORKERS 4
 #define MAX_TEXT_LENGTH 256
