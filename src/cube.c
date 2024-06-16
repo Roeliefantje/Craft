@@ -209,9 +209,9 @@ void make_plant_new(
             // printf("Float px: %f\n", px_m + n * positions[i][j][1]);
             // printf("Float py: %f\n", py + n * positions[i][j][1]);
             // printf("Float pz: %f\n", pz_m + n * positions[i][j][2]);
-            int pxi = px_m + n * positions[i][j][1] + 0.5;
-            int pyi = py + n * positions[i][j][1] + 50.5;
-            int pzi = pz_m + n * positions[i][j][1] + 0.5;
+            int pxi = px_m + n * positions[i][j][0] + 0.5;
+            int pyi = py + n * positions[i][j][1] + 0.5;
+            int pzi = pz_m + n * positions[i][j][2] + 0.5;
             // printf("int px: %d\n", pxi);
             // printf("int py: %d\n", pyi);
             // printf("int pz: %d\n", pzi);
@@ -256,7 +256,7 @@ void make_plant_new(
     mat_rotate(mb, 0, 1, 0, RADIANS(rotation));
     mat_multiply(ma, mb, ma);
     //mat_apply(data, ma, 24, 3, 8); //CHANGED FROM 10 TO 8, I LOVE RANDOM INTS...
-    mat_translate(mb, px, py, pz);
+    //mat_translate(mb, px, py, pz);
     mat_multiply(ma, mb, ma);
     //mat_apply(data, ma, 24, 0, 8); //CHANGED FROM 10 TO 8, I LOVE RANDOM INTS...
 }
