@@ -21,10 +21,10 @@ void make_cube_face_greedy(
         {-1, -1, +1},
     };
     static const float offsets[6][6][3] = {
-        {{1, 0, 0}, {0, 0, 1}, {1, 0, 1},{+1, -1, +1}, {+1, +1, -1}, {+1, +1, +1}},
+        {{0, 0, 0}, {0, 1, 1}, {0, 1, 0},{0, 0, 1}, {0, 1, 1}, {0, 0, 0}},
         {{+1, -1, +1}, {+1, +1, -1}, {+1, +1, +1},{+1, -1, +1}, {+1, +1, -1}, {+1, +1, +1}},
+        {{0, 0, 0}, {1, 0, 1}, {1, 0, 0}, {0, 0, 1}, {1, 0, 1}, {0, 0, 0}},
         {{1, 0, 0}, {1, 0, 1}, {0, 0, 0}, {0, 0, 0}, {1, 0, 1}, {0, 0, 1}},
-        {{-1, -1, +1}, {+1, -1, -1}, {+1, -1, +1},{+1, -1, +1}, {+1, +1, -1}, {+1, +1, +1}},
         {{-1, +1, -1}, {+1, -1, -1}, {+1, +1, -1},{+1, -1, +1}, {+1, +1, -1}, {+1, +1, +1}},
         {{-1, +1, +1}, {+1, -1, +1}, {+1, +1, +1},{+1, -1, +1}, {+1, +1, -1}, {+1, +1, +1}}
     };
@@ -76,7 +76,7 @@ void make_cube_face_greedy(
     float du = (w % 16) * s;
     float dv = (w / 16) * s;
     int flip = ao[0] + ao[3] > ao[1] + ao[2];
-    for (int v = 5; v >= 0; v--) {
+    for (int v = 0; v < 6; v++) {
         int j = flip ? flipped[face_dir][v] : indices[face_dir][v];
         VertexData vd;
 
@@ -102,8 +102,8 @@ void make_cube_face_greedy(
         normals[face_dir][1] * normalized_light_direction[1] + 
         normals[face_dir][2] * normalized_light_direction[2];
 
-        vd.u = du + (uvs[face_dir][j][0] ? b : a);
-        vd.v = dv + (uvs[face_dir][j][1] ? b : a);
+        vd.u = du + (uvs[face_dir][j][0] ? b : a) * x_length;
+        vd.v = dv + (uvs[face_dir][j][1] ? b : a) * z_length;
         vd.t = ao[j];
         vd.s = light[j];
         *(vdp++) = vd;
