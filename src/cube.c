@@ -277,31 +277,20 @@ void make_plant(
             float pz_m = fmod( pz, 32);
             pz_m < 0 ? pz_m += 32 : pz_m;
 
-            // printf("Float px: %f\n", px_m + n * positions[i][j][1]);
-            // printf("Float py: %f\n", py + n * positions[i][j][1]);
-            // printf("Float pz: %f\n", pz_m + n * positions[i][j][2]);
             int pxi = px_m + n * positions[i][j][0] + 0.5;
             int pyi = py + n * positions[i][j][1] + 0.5;
             int pzi = pz_m + n * positions[i][j][2] + 0.5;
-            // printf("int px: %d\n", pxi);
-            // printf("int py: %d\n", pyi);
-            // printf("int pz: %d\n", pzi);
+            vdp->xyz = ((pxi & 0xFF) << 24) | ((pyi & 0xFF) << 16) | ((pzi & 0xFF) << 8) | normal_flags[i];
+            int u = dui + (uvs[i][j][0] ? 1 : 0);
+            int v = dvi + (uvs[i][j][1] ? 1 : 0);
+            int t = ao * 2; //MAXVALUE = 2, 2 bits 
+            int s = light * 16; //MAXVALUE = 15 4 bits
+            vdp->uvts = ((u & 0xFF) << 24) | ((v & 0xFF) << 16) | ((t & 0xFF) << 8) | s;
 
             *(vdp++);
         }
     }
-    float ma[16];
-    float mb[16];
-    mat_identity(ma);
-    mat_rotate(mb, 0, 1, 0, RADIANS(rotation));
-    mat_multiply(ma, mb, ma);
-    //mat_apply(data, ma, 24, 3, 8); //CHANGED FROM 10 TO 8, I LOVE RANDOM INTS...
-    //mat_translate(mb, px, py, pz);
-    mat_multiply(ma, mb, ma);
-    //mat_apply(data, ma, 24, 0, 8); //CHANGED FROM 10 TO 8, I LOVE RANDOM INTS...
 }
-
-
 
 void make_player(
     VertexData *data,
