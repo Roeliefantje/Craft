@@ -48,7 +48,7 @@
 #define RENDER_CHUNK_RADIUS 64
 #define RENDER_SIGN_RADIUS 4
 #define DELETE_CHUNK_RADIUS 72
-#define CHUNK_SIZE 32 // If this is changed, it should  also be changed in block_vertex shader.
+#define CHUNK_SIZE 128
 #define CHUNK_SIZE_P (CHUNK_SIZE + 1)
 #define COMMIT_INTERVAL 5
 

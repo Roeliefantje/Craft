@@ -122,6 +122,7 @@ typedef struct {
     GLuint chunk_pos;
     GLuint position_uint;
     GLuint uvts;
+    GLuint chunk_size;
 } Attrib;
 
 typedef struct {
@@ -1846,8 +1847,8 @@ int worker_run(void *arg) {
         if (item->load) {
             load_chunk(item);
         }
-        //compute_chunk(item);
-        compute_chunk_greedy(item);
+        compute_chunk(item);
+        //compute_chunk_greedy(item);
         mtx_lock(&worker->mtx);
         worker->state = WORKER_DONE;
         mtx_unlock(&worker->mtx);
@@ -2030,6 +2031,7 @@ int render_chunks(Attrib *attrib, Player *player) {
     glUniform3f(attrib->camera, s->x, s->y, s->z);
     glUniform1i(attrib->sampler, 0);
     glUniform1i(attrib->extra1, 2);
+    glUniform1i(attrib->chunk_size, CHUNK_SIZE);
     glUniform1f(attrib->extra2, light);
     glUniform1f(attrib->extra3, g->render_radius * CHUNK_SIZE);
     glUniform1i(attrib->extra4, g->ortho);
@@ -3088,6 +3090,7 @@ int main(int argc, char **argv) {
     block_attrib.extra3 = glGetUniformLocation(program, "fog_distance");
     block_attrib.extra4 = glGetUniformLocation(program, "ortho");
     block_attrib.camera = glGetUniformLocation(program, "camera");
+    block_attrib.chunk_size = glGetUniformLocation(program, "chunk_size");
     block_attrib.timer = glGetUniformLocation(program, "timer");
     block_attrib.chunk_pos = glGetUniformLocation(program, "chunk_pos");
 
