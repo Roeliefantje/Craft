@@ -10,6 +10,8 @@ void mat_vec_multiply(float *vector, float *a, float *b);
 void mat_multiply(float *matrix, float *a, float *b);
 void mat_apply(float *data, float *matrix, int count, int offset, int stride);
 void frustum_planes(__m256 planes[6][4], int radius, float *matrix);
+void frustum_planes_n(float planes[6][4], int radius, float *matrix);
+
 void mat_frustum(
     float *matrix, float left, float right, float bottom,
     float top, float znear, float zfar);

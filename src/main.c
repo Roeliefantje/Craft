@@ -2167,8 +2167,22 @@ int render_chunks(Attrib *attrib, Player *player) {
     set_matrix_3d(
         matrix, g->width, g->height,
         s->x, s->y, s->z, s->rx, s->ry, g->fov, g->ortho, g->render_radius);
-    __m256 planes[6][4];
-    frustum_planes(planes, g->render_radius, matrix);
+
+    float matrix_gpu[16];
+    set_matrix_3d(
+        matrix_gpu, g->width, g->height,
+        0, 0, 0, s->rx, s->ry, g->fov, g->ortho, g->render_radius);
+    // __m256 planes[6][4];
+    // frustum_planes(planes, g->render_radius, matrix);
+
+    float gpu_planes[6][4];
+    frustum_planes_n(gpu_planes, g->render_radius, matrix_gpu);
+    int visibililitylookup[RENDER_CHUNK_RADIUS * RENDER_CHUNK_RADIUS * 4];
+    updateComputeBuffer(attrib->compute_planes_input, sizeof(gpu_planes), gpu_planes);
+    dispatchComputeShader(attrib->compute_program, attrib->compute_output, attrib->compute_planes_input);
+    readBuffer(attrib->compute_output, sizeof(visibililitylookup), visibililitylookup);
+        printf("plane: %1f \n", gpu_planes[4][3]);
+
     glUseProgram(attrib->program);
     glUniformMatrix4fv(attrib->matrix, 1, GL_FALSE, matrix);
     glUniform3f(attrib->camera, s->x, s->y, s->z);
@@ -2180,12 +2194,6 @@ int render_chunks(Attrib *attrib, Player *player) {
     glUniform1i(attrib->extra4, g->ortho);
     glUniform1f(attrib->timer, time_of_day());
 
-    float gpu_planes[6][4];
-    int visibililitylookup[RENDER_CHUNK_RADIUS * RENDER_CHUNK_RADIUS * 4];
-    updateComputeBuffer(attrib->compute_planes_input, sizeof(gpu_planes), gpu_planes);
-    dispatchComputeShader(attrib->compute_program, attrib->compute_output, attrib->compute_planes_input);
-    readBuffer(attrib->compute_output, sizeof(visibililitylookup), visibililitylookup);
-    
     for (int i = 0; i < g->chunk_count; i++) {
         Chunk *chunk = g->chunks + i;
         if (chunk_distance(chunk, p, q) > g->render_radius) {
