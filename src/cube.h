@@ -4,13 +4,14 @@
 typedef struct {
     unsigned int xyz;
     unsigned int uvts;
+    unsigned int uvScales;
 } VertexData;
 
 void make_cube_face_greedy(
     VertexData *data, float ao[4], float light[4],
     int face_dir, int w,
     float x, float y, float z, float n,
-    float x_length, float y_length, float z_length);
+    unsigned int x_length, unsigned int y_length, unsigned int z_length);
 
 void make_cube_faces(
     VertexData *data, float ao[6][4], float light[6][4],

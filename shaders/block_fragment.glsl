@@ -13,11 +13,15 @@ varying float fog_factor;
 varying float fog_height;
 varying float diffuse;
 varying vec4 local_position;
+varying vec2 uv_scalar;
 
 const float pi = 3.14159265;
+const float tile_size = 0.0625;
 
 void main() {
-    vec3 color = vec3(texture2D(sampler, fragment_uv));
+    vec2 uv_offset = floor(uv_scalar);
+    vec2 uv = fragment_uv - uv_offset * tile_size;
+    vec3 color = vec3(texture2D(sampler, uv));
     if (color == vec3(1.0, 0.0, 1.0)) {
         discard;
     }

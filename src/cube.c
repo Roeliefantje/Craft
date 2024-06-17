@@ -10,7 +10,7 @@ void make_cube_face_greedy(
     VertexData *data, float ao[4], float light[4],
     int face_dir, int w,
     float x, float y, float z, float n,
-    float x_length, float y_length, float z_length)
+    unsigned int x_length, unsigned int y_length, unsigned int z_length)
 {
     static const float positions[6][3] = { // int faces[6] = {left, right, top, bottom, front, back};
         {-1,-1,-1},
@@ -20,13 +20,13 @@ void make_cube_face_greedy(
         {-1, -1, -1},
         {-1, -1, +1},
     };
-    static const float offsets[6][6][3] = {
-        {{0, 0, 0}, {0, 1, 1}, {0, 1, 0},{0, 0, 1}, {0, 1, 1}, {0, 0, 0}},
-        {{+1, -1, +1}, {+1, +1, -1}, {+1, +1, +1},{+1, -1, +1}, {+1, +1, -1}, {+1, +1, +1}},
-        {{0, 0, 0}, {1, 0, 1}, {1, 0, 0}, {0, 0, 0}, {0, 0, 1}, {1, 0, 1}},
-        {{1, 0, 0}, {1, 0, 1}, {0, 0, 0}, {0, 0, 0}, {1, 0, 1}, {0, 0, 1}},
-        {{-1, +1, -1}, {+1, -1, -1}, {+1, +1, -1},{+1, -1, +1}, {+1, +1, -1}, {+1, +1, +1}},
-        {{-1, +1, +1}, {+1, -1, +1}, {+1, +1, +1},{+1, -1, +1}, {+1, +1, -1}, {+1, +1, +1}}
+    static const float offsets[6][4][3] = {
+        {{0, 0, 0}, {0, 1, 1}, {0, 1, 0},{0, 0, 1}},
+        {{+1, -1, +1}, {+1, +1, -1}, {+1, +1, +1},{+1, -1, +1}},
+        {{0, 0, 0}, {0, 0, 1}, {1, 0, 0}, {1, 0, 1}},
+        {{1, 0, 0}, {1, 0, 1}, {0, 0, 0}, {0, 0, 0}},
+        {{-1, +1, -1}, {+1, -1, -1}, {+1, +1, -1},{+1, -1, +1}},
+        {{-1, +1, +1}, {+1, -1, +1}, {+1, +1, +1},{+1, -1, +1}}
     };
     static const float normals[6][3] = {
         {-1, 0, 0},
@@ -67,15 +67,11 @@ void make_cube_face_greedy(
         {0, 2, 1, 2, 3, 1}
     };
     //float *d = data;
-    float s = 0.0625;
-    float a = 0 + 1 / 2048.0;
-    float b = s - 1 / 2048.0;
     // int faces[6] = {left, right, top, bottom, front, back};
     // int tiles[6] = {wleft, wright, wtop, wbottom, wfront, wback};
-    float du = (w % 16) * s;
-    float dv = (w / 16) * s;
-    int dui = (w % 16);
-    int dvi = (w / 16);
+    int ew = blocks[w][face_dir];
+    int dui = (ew % 16);
+    int dvi = (ew / 16);
     VertexData *vdp = (VertexData*)data;
 
     int flip = ao[0] + ao[3] > ao[1] + ao[2];
@@ -88,9 +84,9 @@ void make_cube_face_greedy(
         z_modulo < 1 ? z_modulo += 32 : z_modulo;
 
         float pos[3] ={
-            ((n * positions[face_dir][0]) + (offsets[face_dir][v][0] * x_length - n)),
-            ((n * positions[face_dir][1]) + (offsets[face_dir][v][1] * y_length - n)),
-            ((n * positions[face_dir][2]) + (offsets[face_dir][v][2] * z_length - n)),
+            ((n * positions[face_dir][0]) + (offsets[face_dir][j][0] * x_length - n)),
+            ((n * positions[face_dir][1]) + (offsets[face_dir][j][1] * y_length - n)),
+            ((n * positions[face_dir][2]) + (offsets[face_dir][j][2] * z_length - n)),
         };
         unsigned int xi = x_modulo + pos[0] + 0.5;
         unsigned int yi = y + pos[1] + 0.5;
@@ -98,9 +94,10 @@ void make_cube_face_greedy(
 
 
         vdp->xyz = ((xi & 0xFF) << 24) | ((yi & 0xFF) << 16) | ((zi & 0xFF) << 8) | normal_flags[face_dir];
+        vdp->uvScales = (((uvs[face_dir][j][0] ? x_length : 0) & 0xFF) << 24) | (((uvs[face_dir][j][1] ? z_length  : 0) & 0xFF) << 16);
 
-        int u = dui + (uvs[face_dir][j][0] ? 1 : 0) * x_length; //MAXVALUE = 15, 4 bits
-        int v = dvi + (uvs[face_dir][j][1] ? 1 : 0) * z_length; //MAXVALUE = 15, 4 bits
+        int u = dui + (uvs[face_dir][j][0] ? x_length : 0); //MAXVALUE = 15, 4 bits
+        int v = dvi + (uvs[face_dir][j][1] ? z_length : 0); //MAXVALUE = 15, 4 bits
         int t = ao[j] * 2; //MAXVALUE = 2, 2 bits 
         int s = light[j] * 16; //MAXVALUE = 15 4 bits
 
@@ -190,6 +187,8 @@ void make_cube_faces(
             unsigned int yi = y + n * positions[i][j][1] + 0.5; //MAX VALUE 254, 8 bits
             unsigned int zi = z_modulo + n * positions[i][j][2] + 0.5; //MAX VALUE 31, 5 bits
                                                           //Normal flags MAX VALUE 10, 4 bits
+            vdp->uvScales = ((0 & 0xFF) << 24) | ((0 & 0xFF) << 16);
+                             
             vdp->xyz = ((xi & 0xFF) << 24) | ((yi & 0xFF) << 16) | ((zi & 0xFF) << 8) | normal_flags[i];
             int u = dui + (uvs[i][j][0] ? 1 : 0); //MAXVALUE = 15, 4 bits
             int v = dvi + (uvs[i][j][1] ? 1 : 0); //MAXVALUE = 15, 4 bits
