@@ -19,8 +19,25 @@
 #include "tinycthread.h"
 #include "util.h"
 #include "world.h"
-#include "uthash.h"
+
 #include <immintrin.h>
+
+
+//Define the Hash function before importing uthash so it will use own hash function
+
+#define HASH_FUNCTION(key,keylen,hashv)                                          \
+do {                                                                             \
+  unsigned int prime1 = 73856093;                                                \
+  unsigned int prime2 = 19349663;                                                \
+  const ChunkKey *_key=(const ChunkKey*)(key);                                   \
+  hashv = (_key->p * prime1) ^ (_key->q * prime2);                               \
+} while (0)
+
+
+#include "uthash.h"
+
+
+
 
 #define MAX_CHUNKS DELETE_CHUNK_RADIUS * 2 * DELETE_CHUNK_RADIUS * 2
 #define MAX_PLAYERS 128

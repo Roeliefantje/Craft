@@ -88,7 +88,7 @@ do {                                                                            
 #endif
 
 #ifndef HASH_FUNCTION
-#define HASH_FUNCTION(keyptr,keylen,hashv) HASH_JEN(keyptr, keylen, hashv)
+#define HASH_FUNCTION(keyptr,keylen,hashv) HASH_OAT(keyptr, keylen, hashv)
 #endif
 
 #ifndef HASH_KEYCMP

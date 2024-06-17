@@ -6,6 +6,7 @@
         "ranges": "c",
         "span": "c",
         "tinycthread.h": "c",
-        "matrix.h": "c"
+        "matrix.h": "c",
+        "immintrin.h": "c"
     }
 }
