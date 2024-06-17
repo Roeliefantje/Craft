@@ -154,6 +154,8 @@ typedef struct {
     GLuint compute_program;
     GLuint compute_planes_input;
     GLuint compute_output;
+    GLsync compute_sync;
+    int* lookup_table;
 } Attrib;
 
 typedef struct {
@@ -2177,10 +2179,34 @@ int render_chunks(Attrib *attrib, Player *player) {
 
     float gpu_planes[6][4];
     frustum_planes_n(gpu_planes, g->render_radius, matrix_gpu);
-    int visibililitylookup[RENDER_CHUNK_RADIUS * RENDER_CHUNK_RADIUS * 4];
-    updateComputeBuffer(attrib->compute_planes_input, sizeof(gpu_planes), gpu_planes);
-    dispatchComputeShader(attrib->compute_program, attrib->compute_output, attrib->compute_planes_input);
-    readBuffer(attrib->compute_output, sizeof(visibililitylookup), visibililitylookup);
+
+    if (attrib->compute_sync == NULL) {
+        printf("we startin");
+        updateComputeBuffer(attrib->compute_planes_input, sizeof(gpu_planes), gpu_planes);
+        dispatchComputeShader(attrib->compute_program, attrib->compute_output, attrib->compute_planes_input);
+        glMemoryBarrier( GL_SHADER_STORAGE_BARRIER_BIT);
+        attrib->compute_sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+    }
+    
+    
+
+    GLenum waitReturn = glClientWaitSync( attrib->compute_sync, GL_SYNC_FLUSH_COMMANDS_BIT, 0);
+    if (waitReturn == GL_ALREADY_SIGNALED || waitReturn == GL_CONDITION_SATISFIED) {
+        int visibililitylookup[RENDER_CHUNK_RADIUS * RENDER_CHUNK_RADIUS * 4];
+        readBuffer(attrib->compute_output, sizeof(visibililitylookup), visibililitylookup);
+        attrib->lookup_table = visibililitylookup;
+
+        updateComputeBuffer(attrib->compute_planes_input, sizeof(gpu_planes), gpu_planes);
+        dispatchComputeShader(attrib->compute_program, attrib->compute_output, attrib->compute_planes_input);
+        glMemoryBarrier( GL_SHADER_STORAGE_BARRIER_BIT);
+        attrib->compute_sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+    } else {
+        printf("compute not done yet");
+    }
+    
+    if (attrib->lookup_table == NULL) {
+        return result;
+    }
 
     glUseProgram(attrib->program);
     glUniformMatrix4fv(attrib->matrix, 1, GL_FALSE, matrix);
@@ -2198,7 +2224,7 @@ int render_chunks(Attrib *attrib, Player *player) {
         if (chunk_distance(chunk, p, q) > g->render_radius) {
             continue;
         }
-        if (visibililitylookup[chunk->key.p - p + RENDER_CHUNK_RADIUS + (chunk->key.q - q + RENDER_CHUNK_RADIUS) * RENDER_CHUNK_RADIUS * 2] == 0 ){
+        if (attrib->lookup_table[chunk->key.p - p + RENDER_CHUNK_RADIUS + (chunk->key.q - q + RENDER_CHUNK_RADIUS) * RENDER_CHUNK_RADIUS * 2] == 0 ){
             continue;
         }
         // if (!chunk_visible(
