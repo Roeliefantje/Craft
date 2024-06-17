@@ -19,8 +19,25 @@
 #include "tinycthread.h"
 #include "util.h"
 #include "world.h"
-#include "uthash.h"
+
 #include <immintrin.h>
+
+
+//Define the Hash function before importing uthash so it will use own hash function
+
+#define HASH_FUNCTION(key,keylen,hashv)                                          \
+do {                                                                             \
+  unsigned int prime1 = 73856093;                                                \
+  unsigned int prime2 = 19349663;                                                \
+  const ChunkKey *_key=(const ChunkKey*)(key);                                   \
+  hashv = (_key->p * prime1) ^ (_key->q * prime2);                               \
+} while (0)
+
+
+#include "uthash.h"
+
+
+
 
 #define MAX_CHUNKS DELETE_CHUNK_RADIUS * 2 * DELETE_CHUNK_RADIUS * 2
 #define MAX_PLAYERS 128
@@ -122,6 +139,7 @@ typedef struct {
     GLuint chunk_pos;
     GLuint position_uint;
     GLuint uvts;
+    GLuint chunk_size;
     GLuint uvScales;
 } Attrib;
 
@@ -1953,8 +1971,8 @@ int worker_run(void *arg) {
         if (item->load) {
             load_chunk(item);
         }
-        //compute_chunk(item);
-        compute_chunk_greedy(item);
+        compute_chunk(item);
+        //compute_chunk_greedy(item);
         mtx_lock(&worker->mtx);
         worker->state = WORKER_DONE;
         mtx_unlock(&worker->mtx);
@@ -2137,6 +2155,7 @@ int render_chunks(Attrib *attrib, Player *player) {
     glUniform3f(attrib->camera, s->x, s->y, s->z);
     glUniform1i(attrib->sampler, 0);
     glUniform1i(attrib->extra1, 2);
+    glUniform1i(attrib->chunk_size, CHUNK_SIZE);
     glUniform1f(attrib->extra2, light);
     glUniform1f(attrib->extra3, g->render_radius * CHUNK_SIZE);
     glUniform1i(attrib->extra4, g->ortho);
@@ -3196,6 +3215,7 @@ int main(int argc, char **argv) {
     block_attrib.extra3 = glGetUniformLocation(program, "fog_distance");
     block_attrib.extra4 = glGetUniformLocation(program, "ortho");
     block_attrib.camera = glGetUniformLocation(program, "camera");
+    block_attrib.chunk_size = glGetUniformLocation(program, "chunk_size");
     block_attrib.timer = glGetUniformLocation(program, "timer");
     block_attrib.chunk_pos = glGetUniformLocation(program, "chunk_pos");
 

@@ -5,6 +5,7 @@ uniform vec3 camera;
 uniform float fog_distance;
 uniform int ortho;
 uniform vec2 chunk_pos;
+uniform int chunk_size;
 
 in vec4 position;
 
@@ -80,7 +81,7 @@ void main() {
     //Local_position is passed to the fragment shader for debugging.
     local_position = getPosition(position_uint);
     // -0.5 to align back to original, doesnt really do anything but still
-    vec4 converted_position = (getPosition(position_uint) + vec4(chunk_pos.x * 32, 0.0, chunk_pos.y * 32, 0.0)) - vec4(0.5, 0.5, 0.5, 0);
+    vec4 converted_position = (getPosition(position_uint) + vec4(chunk_pos.x * chunk_size, 0.0, chunk_pos.y * chunk_size, 0.0)) - vec4(0.5, 0.5, 0.5, 0);
 
     // if (isPlant(position_uint)) {
     //     int normal_flag = int(position_uint) & 0xFF;

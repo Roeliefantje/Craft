@@ -78,10 +78,10 @@ void make_cube_face_greedy(
     for (int v = 0; v < 6; v++) {
         int j = flip ? flipped[face_dir][v] : indices[face_dir][v];
 
-        float x_modulo = fmod(x, 32);
-        x_modulo < 1 ? x_modulo += 32 : x_modulo;
-        float z_modulo = fmod(z, 32);
-        z_modulo < 1 ? z_modulo += 32 : z_modulo;
+        float x_modulo = fmod(x, CHUNK_SIZE);
+        x_modulo < 1 ? x_modulo += CHUNK_SIZE : x_modulo;
+        float z_modulo = fmod(z, CHUNK_SIZE);
+        z_modulo < 1 ? z_modulo += CHUNK_SIZE : z_modulo;
 
         float pos[3] ={
             ((n * positions[face_dir][0]) + (offsets[face_dir][j][0] * x_length - n)),
@@ -178,10 +178,10 @@ void make_cube_faces(
         int flip = ao[i][0] + ao[i][3] > ao[i][1] + ao[i][2];
         for (int v = 0; v < 6; v++) {
             int j = flip ? flipped[i][v] : indices[i][v];
-            float x_modulo = fmod(x, 32);
-            x_modulo < 0 ? x_modulo += 32 : x_modulo;
-            float z_modulo = fmod(z, 32);
-            z_modulo < 0 ? z_modulo += 32 : z_modulo;
+            float x_modulo = fmod(x, CHUNK_SIZE);
+            x_modulo < 0 ? x_modulo += CHUNK_SIZE : x_modulo;
+            float z_modulo = fmod(z, CHUNK_SIZE);
+            z_modulo < 0 ? z_modulo += CHUNK_SIZE : z_modulo;
 
             unsigned int xi = x_modulo + n * positions[i][j][0] + 0.5; //MAX VALUE 31, 5 bits
             unsigned int yi = y + n * positions[i][j][1] + 0.5; //MAX VALUE 254, 8 bits
@@ -269,10 +269,10 @@ void make_plant(
         for (int v = 0; v < 6; v++) {
             int j = indices[i][v];
 
-            float px_m = fmod( px, 32);
-            px_m < 0 ? px_m += 32 : px_m;
-            float pz_m = fmod( pz, 32);
-            pz_m < 0 ? pz_m += 32 : pz_m;
+            float px_m = fmod( px, CHUNK_SIZE);
+            px_m < 0 ? px_m += CHUNK_SIZE : px_m;
+            float pz_m = fmod( pz, CHUNK_SIZE);
+            pz_m < 0 ? pz_m += CHUNK_SIZE : pz_m;
 
             vdp->uvScales = 0;
 
