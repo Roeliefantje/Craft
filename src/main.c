@@ -22,16 +22,25 @@
 
 #include <immintrin.h>
 
-
 //Define the Hash function before importing uthash so it will use own hash function
 
-#define HASH_FUNCTION(key,keylen,hashv)                                          \
-do {                                                                             \
-  unsigned int prime1 = 73856093;                                                \
-  unsigned int prime2 = 19349663;                                                \
-  const ChunkKey *_key=(const ChunkKey*)(key);                                   \
-  hashv = (_key->p * prime1) ^ (_key->q * prime2);                               \
+#define SZUDIK_PAIR(key, keylen, hashv) {\
+    ChunkKey *_key = (ChunkKey*) (key); uint a = (_key->p >= 0.0 ? 2.0 * _key->p : (-2.0 * _key->p) - 1.0);\
+    uint b = (_key->q >= 0.0 ? 2.0 * _key->q : (-2.0 * _key->q) - 1.0);\
+    hashv = (a >= b ? (a * a) + a + b : (b * b) + a);\
+}
+
+
+#define HASH_PRIME(key,keylen,hashv)\
+do {\
+  unsigned int prime1 = 73856093;\
+  unsigned int prime2 = 19349663;\
+  const ChunkKey *_key=(const ChunkKey*)(key);\
+  hashv = (_key->p * prime1) ^ (_key->q * prime2);\
 } while (0)
+
+// #define HASH_FUNC(key,keylen,hasv) SZUDIKPAIR(key, keylen, hasv)
+
 
 
 #include "uthash.h"
