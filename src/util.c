@@ -135,6 +135,58 @@ GLuint make_program(GLuint shader1, GLuint shader2) {
     return program;
 }
 
+GLuint createComputeBuffer(GLenum target, GLsizeiptr size, const void* data, GLenum usage) {
+    GLuint buffer;
+    glGenBuffers(1, &buffer);
+    glBindBuffer(target, buffer);
+    glBufferData(target, size, data, usage);
+    glBindBuffer(target, 0);
+    return buffer;
+}
+
+void updateComputeBuffer(GLuint buffer, GLsizeiptr size, const void* data) {
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer);
+    glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, size, data);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+
+void dispatchComputeShader(GLuint program, GLuint outputBuffer, GLuint inputBuffer) {
+    glUseProgram(program);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, inputBuffer); //input buffer
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, outputBuffer);
+    
+    glDispatchCompute(RENDER_CHUNK_RADIUS * 2 * RENDER_CHUNK_RADIUS * 2, 1, 1);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+}
+
+void readBuffer(GLuint buffer, GLsizeiptr size, void* data) {
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer);
+    void* ptr = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+    memcpy(data, ptr, size);
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+
+GLuint load_compute_program(const char *path1){
+    GLuint program = glCreateProgram();
+    GLuint compute_shader = load_shader(GL_COMPUTE_SHADER, path1);
+    glAttachShader(program, compute_shader);
+    glLinkProgram(program);
+    GLint status;
+    glGetProgramiv(program, GL_LINK_STATUS, &status);
+    if (status == GL_FALSE) {
+        GLint length;
+        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
+        GLchar *info = calloc(length, sizeof(GLchar));
+        glGetProgramInfoLog(program, length, NULL, info);
+        fprintf(stderr, "glLinkProgram failed: %s\n", info);
+        free(info);
+    }
+    glDetachShader(program, compute_shader);
+    glDeleteShader(compute_shader);
+    return program;
+}
+
 GLuint load_program(const char *path1, const char *path2) {
     GLuint shader1 = load_shader(GL_VERTEX_SHADER, path1);
     GLuint shader2 = load_shader(GL_FRAGMENT_SHADER, path2);

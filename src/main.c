@@ -150,6 +150,10 @@ typedef struct {
     GLuint uvts;
     GLuint chunk_size;
     GLuint uvScales;
+
+    GLuint compute_program;
+    GLuint compute_planes_input;
+    GLuint compute_output;
 } Attrib;
 
 typedef struct {
@@ -2175,16 +2179,26 @@ int render_chunks(Attrib *attrib, Player *player) {
     glUniform1f(attrib->extra3, g->render_radius * CHUNK_SIZE);
     glUniform1i(attrib->extra4, g->ortho);
     glUniform1f(attrib->timer, time_of_day());
+
+    float gpu_planes[6][4];
+    int visibililitylookup[RENDER_CHUNK_RADIUS * RENDER_CHUNK_RADIUS * 4];
+    updateComputeBuffer(attrib->compute_planes_input, sizeof(gpu_planes), gpu_planes);
+    dispatchComputeShader(attrib->compute_program, attrib->compute_output, attrib->compute_planes_input);
+    readBuffer(attrib->compute_output, sizeof(visibililitylookup), visibililitylookup);
+    
     for (int i = 0; i < g->chunk_count; i++) {
         Chunk *chunk = g->chunks + i;
         if (chunk_distance(chunk, p, q) > g->render_radius) {
             continue;
         }
-        if (!chunk_visible(
-            planes, chunk->key.p, chunk->key.q, chunk->miny, chunk->maxy))
-        {
+        if (visibililitylookup[chunk->key.p - p + RENDER_CHUNK_RADIUS + (chunk->key.q - q + RENDER_CHUNK_RADIUS) * RENDER_CHUNK_RADIUS * 2] == 0 ){
             continue;
         }
+        // if (!chunk_visible(
+        //     planes, chunk->key.p, chunk->key.q, chunk->miny, chunk->maxy))
+        // {
+        //     continue;
+        // }
         draw_chunk(attrib, chunk);
         result += chunk->faces;
     }
@@ -3234,6 +3248,13 @@ int main(int argc, char **argv) {
     block_attrib.timer = glGetUniformLocation(program, "timer");
     block_attrib.chunk_pos = glGetUniformLocation(program, "chunk_pos");
 
+    //BIND COMPUTE SHADER THINGS
+    program = load_compute_program("shaders/frustum_compute.glsl");
+    block_attrib.compute_program = program;
+    block_attrib.compute_output = createComputeBuffer(GL_SHADER_STORAGE_BUFFER, sizeof(int) * RENDER_CHUNK_RADIUS * RENDER_CHUNK_RADIUS * 4, NULL, GL_DYNAMIC_READ);
+    block_attrib.compute_planes_input = createComputeBuffer(GL_SHADER_STORAGE_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
+
+
     program = load_program(
         "shaders/line_vertex.glsl", "shaders/line_fragment.glsl");
     line_attrib.program = program;
@@ -3258,6 +3279,8 @@ int main(int argc, char **argv) {
     sky_attrib.matrix = glGetUniformLocation(program, "matrix");
     sky_attrib.sampler = glGetUniformLocation(program, "sampler");
     sky_attrib.timer = glGetUniformLocation(program, "timer");
+
+    
 
     // CHECK COMMAND LINE ARGUMENTS //
     if (argc == 2 || argc == 3) {
