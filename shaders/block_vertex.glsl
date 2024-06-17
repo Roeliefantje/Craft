@@ -15,6 +15,7 @@ in float diffuse_bake;
 in vec4 uv;
 in uint position_uint;
 in uint uvts;
+in uint uvScales;
 
 out vec2 fragment_uv;
 out float fragment_ao;
@@ -22,6 +23,7 @@ out float fragment_light;
 out float fog_factor;
 out float fog_height;
 out float diffuse;
+out vec2 uv_scalar;
 out vec4 local_position;
 
 const float tile_size = 0.0625;
@@ -71,6 +73,10 @@ float getLight(uint uvts) {
     return light / 16.0;
 }
 
+vec2 getUVScalar(uint uvScales){
+    return vec2(int(uvScales >> 24), int(uvScales >> 16)& 0xFF);
+}
+
 void main() {
     //Local_position is passed to the fragment shader for debugging.
     local_position = getPosition(position_uint);
@@ -92,6 +98,8 @@ void main() {
 
 
     gl_Position = matrix * converted_position;
+
+    uv_scalar = getUVScalar(uvScales);
 
     fragment_uv = getUV(uvts);
     // fragment_uv = uv.xy;

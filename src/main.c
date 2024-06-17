@@ -123,6 +123,7 @@ typedef struct {
     GLuint position_uint;
     GLuint uvts;
     GLuint chunk_size;
+    GLuint uvScales;
 } Attrib;
 
 typedef struct {
@@ -314,12 +315,13 @@ void draw_chunk_triangles_3d_ao(Attrib *attrib, GLuint buffer, int count) {
     glEnableVertexAttribArray(attrib->uvts);
     // glEnableVertexAttribArray(attrib->uv);
     glEnableVertexAttribArray(attrib->position_uint);
-    
+    glEnableVertexAttribArray(attrib->uvScales);
     
     // glVertexAttribPointer(attrib->position, 3, GL_FLOAT, GL_FALSE,
     //     sizeof(VertexData), 0);
     glVertexAttribPointer(attrib->position_uint, 1, GL_FLOAT, GL_FALSE, sizeof(VertexData), (GLvoid *)(offsetof(VertexData, xyz)));
     glVertexAttribPointer(attrib->uvts, 1, GL_FLOAT, GL_FALSE, sizeof(VertexData), (GLvoid *)(offsetof(VertexData, uvts)));
+    glVertexAttribPointer(attrib->uvScales, 1, GL_FLOAT, GL_FALSE, sizeof(VertexData), (GLvoid *)(offsetof(VertexData, uvScales)));
     // glVertexAttribPointer(attrib->position, 1, GL_FLOAT, GL_FALSE,
     //     sizeof(VertexData), 0);
     
@@ -344,6 +346,7 @@ void draw_chunk_triangles_3d_ao(Attrib *attrib, GLuint buffer, int count) {
     glDisableVertexAttribArray(attrib->uvts);
     // glDisableVertexAttribArray(attrib->uv);
     glDisableVertexAttribArray(attrib->position_uint);
+    glDisableVertexAttribArray(attrib->uvScales);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
@@ -972,6 +975,50 @@ void dirty_chunk(Chunk *chunk) {
     }
 }
 
+void occlusion_greedy(int face_dir, char self_light,
+    char neighbors[9], char lights[9], float shades[9],
+    float ao[4], float light[4])
+{
+    static const int lookup3[6][4][3] = {
+        {{0, 1, 3}, {2, 1, 5}, {6, 3, 7}, {8, 5, 7}},
+        {{18, 19, 21}, {20, 19, 23}, {24, 21, 25}, {26, 23, 25}},
+        {{0, 1, 3}, {2, 1, 5}, {6, 3, 7}, {8, 5, 7}},
+        //{{6, 7, 15}, {8, 7, 17}, {24, 15, 25}, {26, 17, 25}},
+        {{0, 1, 9}, {2, 1, 11}, {18, 9, 19}, {20, 11, 19}},
+        {{0, 3, 9}, {6, 3, 15}, {18, 9, 21}, {24, 15, 21}},
+        {{2, 5, 11}, {8, 5, 17}, {20, 11, 23}, {26, 17, 23}}
+    };
+   static const int lookup4[6][4][4] = {
+        {{0, 1, 3, 4}, {1, 2, 4, 5}, {3, 4, 6, 7}, {4, 5, 7, 8}},
+        {{18, 19, 21, 22}, {19, 20, 22, 23}, {21, 22, 24, 25}, {22, 23, 25, 26}},
+        //{{6, 7, 15, 16}, {7, 8, 16, 17}, {15, 16, 24, 25}, {16, 17, 25, 26}},
+        {{0, 1, 3, 4}, {1, 2, 4, 5}, {3, 4, 6, 7}, {4, 5, 7, 8}},
+        {{0, 1, 9, 10}, {1, 2, 10, 11}, {9, 10, 18, 19}, {10, 11, 19, 20}},
+        {{0, 3, 9, 12}, {3, 6, 12, 15}, {9, 12, 18, 21}, {12, 15, 21, 24}},
+        {{2, 5, 11, 14}, {5, 8, 14, 17}, {11, 14, 20, 23}, {14, 17, 23, 26}}
+    };
+    static const float curve[4] = {0.0, 0.25, 0.5, 0.75};
+    for (int j = 0; j < 4; j++) {
+        int corner = neighbors[lookup3[face_dir][j][0]];
+        int side1 = neighbors[lookup3[face_dir][j][1]];
+        int side2 = neighbors[lookup3[face_dir][j][2]];
+        int value = side1 && side2 ? 3 : corner + side1 + side2;
+        float shade_sum = 0;
+        float light_sum = 0;
+        int is_light = self_light == 15;
+        for (int k = 0; k < 4; k++) {
+            shade_sum += shades[lookup4[face_dir][j][k]];
+            light_sum += lights[lookup4[face_dir][j][k]];
+        }
+        if (is_light) {
+            light_sum = 15 * 4 * 10;
+        }
+        float total = curve[value] + shade_sum / 4.0;
+        ao[j] = MIN(total, 1.0);
+        light[j] = light_sum / 15.0 / 4.0;
+    }
+}
+
 void occlusion(
     char neighbors[27], char lights[27], float shades[27],
     float ao[6][4], float light[6][4])
@@ -1162,8 +1209,6 @@ void compute_chunk_greedy(WorkerItem *item) {
         {1,1,1},
     };
 
-
-        float ao[4] = {0};
     for (int y = 0; y < 256; y++){
         char covered[CHUNK_SIZE * CHUNK_SIZE] = {0};
         for (int x = 0; x < CHUNK_SIZE; x++){
@@ -1184,18 +1229,60 @@ void compute_chunk_greedy(WorkerItem *item) {
                 if(covered[i] || w == 0 || is_plant(w) || opaque[XYZ(xw,yw + 1,zw)]) continue;
 
                 covered[i] = 1;
+
+                // AO and light
+                char neighbors[9] = {0};
+                char lights[9] = {0};
+                float shades[9] = {0};
+                int index = 0;
+                for (int dx = -1; dx <= 1; dx++) {
+                    for (int dz = -1; dz <= 1; dz++) {
+                        neighbors[index] = opaque[XYZ(xw + dx, yw + 1, zw + dz)];
+                        lights[index] = light[XYZ(xw + dx, yw + 1, zw + dz)];
+                        if (yw + 1 <= highest[XZ(xw + dx, zw + dz)]) {
+                            for (int oy = 0; oy < 8; oy++) {
+                                if (opaque[XYZ(xw + dx, yw + 1 + oy, zw + dz)]) {
+                                    shades[index] = 1.0 - oy * 0.125;
+                                    break;
+                                }
+                            }
+                        }
+                        index++;
+                    }
+                }
+
                 // z-axes
-                float z_length = 1;
+                unsigned int z_length = 1;
                 for(int zd = 1; zd < CHUNK_SIZE - z; zd++){
                     int wd = map_get(map, xl,yl,zl + zd);
                     if(covered[i + zd] || wd != w || is_plant(wd) || opaque[XYZ(xw,yw + 1,zw + zd)]) break;
+
+                    // Check if AO and light is the same
+                    int valid = 1;
+                    int index_other = 0;
+                    for (int dx = -1; dx <= 1; dx++) {
+                        for (int dz = -1; dz <= 1; dz++) {
+                            // Check light n AO
+                            if( neighbors[index_other] != opaque[XYZ(xw + dx, yw + 1, zw + dz + zd)] ||
+                            lights[index_other] != light[XYZ(xw + dx, yw + 1, zw + dz+  zd)]){ 
+                                valid = 0;
+                                break;
+                            }
+
+                            index_other++;
+                        }
+                        if(!valid)
+                            break;
+                    }
+                    if(!valid)
+                        break;
 
                     z_length++;
                     covered[i + zd] = 1;
                 }
 
                     // x-axes
-                float x_length = 1;
+                unsigned int x_length = 1;
                 for ( int xd = 1; xd < CHUNK_SIZE - x; xd++)
                 {
                     int valid = 1;
@@ -1204,10 +1291,28 @@ void compute_chunk_greedy(WorkerItem *item) {
                     for(int z_row = 0; z_row < z_length; z_row++){
                         int i_row = (x+ xd) * CHUNK_SIZE + (z + z_row);
                         int wd = map_get(map, xl + xd, yl, zl + z_row);
-                        if(covered[i_row] || wd != w || is_plant(wd) || opaque[XYZ(xw + xd, yw + 1, zw + z_row)]){
-                            valid = 0;
-                            break;
+                            if(covered[i_row] || wd != w || is_plant(wd) || opaque[XYZ(xw + xd, yw + 1, zw + z_row)]){
+                                valid = 0;
+                                break;
                             }
+
+                            // Check if AO and light is the same
+                            int index_other = 0;
+                            for (int dx = -1; dx <= 1; dx++) {
+                                for (int dz = -1; dz <= 1; dz++) {
+                                    if( neighbors[index_other] != opaque[XYZ(xw + dx + xd, yw + 1, zw + dz + z_row)] ||
+                                    lights[index_other] != light[XYZ(xw + dx + xd, yw + 1, zw + dz+  z_row)]){ 
+                                        valid = 0;
+                                        break;
+                                    }
+                                    index_other++;
+                                }
+                                if(!valid)
+                                    break;
+                            }
+
+                            if(!valid)
+                                break;
                         }
                         if(valid == 0) break;
                         x_length++;
@@ -1218,11 +1323,12 @@ void compute_chunk_greedy(WorkerItem *item) {
                         covered[i_row] = 1;
                     }
                 }
-
-                float ao1[6][4];
-                float light1[6][4];
+                
+                float ao[4];
+                float r_light[4];
+                occlusion_greedy(2, light[XYZ(xw, yw, zw)], neighbors, lights, shades, ao, r_light);
                 //make_cube_faces_new(data + offset, ao1, light1, 0,0,1,0,0,0,1,1,1,1,1,1,xw,yw,zw, .5f);
-                make_cube_face_greedy(data + offset, ao, ao, 2, w,xw,yw,zw, .5f, x_length, 0, z_length);
+                make_cube_face_greedy(data + offset, ao, r_light, 2, w,xw,yw,zw, .5f, x_length, 0, z_length);
                 offset += 6;
                 faces++;
                 //z += z_length;
@@ -1245,7 +1351,7 @@ void compute_chunk_greedy(WorkerItem *item) {
         int f5 = !opaque[XYZ(x, y, z - 1)];
         int f6 = !opaque[XYZ(x, y, z + 1)];
         int total = f1 + f2 + f4 + f5 + f6;
-        if (total == 0) {
+        if ((total + f3) == 0) {
             continue;
         }
         if (is_plant(ew)) {
@@ -3074,6 +3180,7 @@ int main(int argc, char **argv) {
     block_attrib.program = program;
     block_attrib.position = glGetAttribLocation(program, "position");
     block_attrib.uvts = glGetAttribLocation(program, "uvts");
+    block_attrib.uvScales = glGetAttribLocation(program, "uvScales");
     block_attrib.normal = glGetAttribLocation(program, "diffuse_bake");
     block_attrib.uv = glGetAttribLocation(program, "uv");
     block_attrib.position_uint = glGetAttribLocation(program, "position_uint");
