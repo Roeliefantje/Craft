@@ -1665,7 +1665,8 @@ void gen_chunk_buffer(Chunk *chunk) {
             }
         }
     }
-    compute_chunk(item);
+    //compute_chunk(item);
+    compute_chunk_greedy(item);
     generate_chunk(chunk, item);
     chunk->dirty = 0;
 }

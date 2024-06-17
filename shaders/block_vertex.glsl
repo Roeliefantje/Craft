@@ -82,18 +82,18 @@ void main() {
     // -0.5 to align back to original, doesnt really do anything but still
     vec4 converted_position = (getPosition(position_uint) + vec4(chunk_pos.x * 32, 0.0, chunk_pos.y * 32, 0.0)) - vec4(0.5, 0.5, 0.5, 0);
 
-    if (isPlant(position_uint)) {
-        int normal_flag = int(position_uint) & 0xFF;
-        if (normal_flag == 8 ) { //Correct
-            converted_position.z += 0.5;
-        } else if (normal_flag == 7 || normal_flag == 6) { //Correct
-            converted_position.x += 0.5;
-        } else {
-            converted_position.z += 0.5;
-        }
+    // if (isPlant(position_uint)) {
+    //     int normal_flag = int(position_uint) & 0xFF;
+    //     if (normal_flag == 8 ) { //Correct
+    //         converted_position.z += 0.5;
+    //     } else if (normal_flag == 7 || normal_flag == 6) { //Correct
+    //         converted_position.x += 0.5;
+    //     } else {
+    //         converted_position.z += 0.5;
+    //     }
 
-        //TODO: Add rotation based on which vertex we are
-    }
+    //     //TODO: Add rotation based on which vertex we are
+    // }
 
 
     gl_Position = matrix * converted_position;
