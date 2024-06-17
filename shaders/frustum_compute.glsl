@@ -2,10 +2,10 @@
 
 #define CHUNK_SIZE  32
 #define RENDER_CHUNK_RADIUS  64
-#define MIN_Y -128
-#define MAX_Y 128
+#define MIN_Y 0
+#define MAX_Y 256
 
-layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 
 layout(std430, binding = 0) buffer InputBuffer {
     float data[];
@@ -67,8 +67,8 @@ void main() {
         planes[p][3] = data[offset + 3]; 
     }
 
-    float x = (float(gl_GlobalInvocationID.x) - RENDER_CHUNK_RADIUS) * CHUNK_SIZE - 1 - CHUNK_SIZE/2;
-    float z = (float(gl_GlobalInvocationID.y) - RENDER_CHUNK_RADIUS) * CHUNK_SIZE - 1 - CHUNK_SIZE/2;
+    float x = (float(gl_GlobalInvocationID.x) - RENDER_CHUNK_RADIUS) * CHUNK_SIZE - 1 ;
+    float z = (float(gl_GlobalInvocationID.y) - RENDER_CHUNK_RADIUS) * CHUNK_SIZE - 1;
     float d = CHUNK_SIZE + 1;
     float points[8][3] = {
         {x + 0, MIN_Y, z + 0},

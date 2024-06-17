@@ -155,7 +155,7 @@ void dispatchComputeShader(GLuint program, GLuint outputBuffer, GLuint inputBuff
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, inputBuffer); //input buffer
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, outputBuffer);
     
-    glDispatchCompute(RENDER_CHUNK_RADIUS * 2 , RENDER_CHUNK_RADIUS * 2, 1);
+    glDispatchCompute(RENDER_CHUNK_RADIUS * 2 / 32 , RENDER_CHUNK_RADIUS * 2 / 32, 1);
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
