@@ -1683,8 +1683,11 @@ void gen_chunk_buffer(Chunk *chunk) {
             }
         }
     }
-    //compute_chunk(item);
-    compute_chunk_greedy(item);
+    #if USE_GREEDY_MESHING
+        compute_chunk_greedy(item);
+    #else
+        compute_chunk(item);
+    #endif
     generate_chunk(chunk, item);
     chunk->dirty = 0;
 }
@@ -1971,8 +1974,11 @@ int worker_run(void *arg) {
         if (item->load) {
             load_chunk(item);
         }
-        compute_chunk(item);
-        //compute_chunk_greedy(item);
+        #if USE_GREEDY_MESHING
+            compute_chunk_greedy(item);
+        #else
+            compute_chunk(item);
+        #endif
         mtx_lock(&worker->mtx);
         worker->state = WORKER_DONE;
         mtx_unlock(&worker->mtx);

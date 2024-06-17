@@ -25,6 +25,7 @@
 #define SHOW_INFO_TEXT 1
 #define SHOW_CHAT_TEXT 1
 #define SHOW_PLAYER_NAMES 1
+#define USE_GREEDY_MESHING 1
 
 // key bindings
 #define CRAFT_KEY_FORWARD 'W'
@@ -48,7 +49,7 @@
 #define RENDER_CHUNK_RADIUS 64
 #define RENDER_SIGN_RADIUS 4
 #define DELETE_CHUNK_RADIUS 72
-#define CHUNK_SIZE 32
+#define CHUNK_SIZE 64
 #define CHUNK_SIZE_P (CHUNK_SIZE + 1)
 #define COMMIT_INTERVAL 5
 
