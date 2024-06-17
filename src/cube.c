@@ -187,7 +187,7 @@ void make_cube_faces(
             unsigned int yi = y + n * positions[i][j][1] + 0.5; //MAX VALUE 254, 8 bits
             unsigned int zi = z_modulo + n * positions[i][j][2] + 0.5; //MAX VALUE 31, 5 bits
                                                           //Normal flags MAX VALUE 10, 4 bits
-            vdp->uvScales = ((0 & 0xFF) << 24) | ((0 & 0xFF) << 16);
+            vdp->uvScales = 0;
                              
             vdp->xyz = ((xi & 0xFF) << 24) | ((yi & 0xFF) << 16) | ((zi & 0xFF) << 8) | normal_flags[i];
             int u = dui + (uvs[i][j][0] ? 1 : 0); //MAXVALUE = 15, 4 bits
@@ -226,10 +226,10 @@ void make_plant(
 {
     //printf("Making plant");
     static const float positions[4][4][3] = {
-        {{ 0, -1, -1}, { 0, -1, +1}, { 0, +1, -1}, { 0, +1, +1}},
-        {{ 0, -1, -1}, { 0, -1, +1}, { 0, +1, -1}, { 0, +1, +1}},
-        {{-1, -1,  0}, {-1, +1,  0}, {+1, -1,  0}, {+1, +1,  0}},
-        {{-1, -1,  0}, {-1, +1,  0}, {+1, -1,  0}, {+1, +1,  0}}
+        {{ -1, -1, -1}, { +1, -1, +1}, { -1, +1, -1}, { +1, +1, +1}},
+        {{ -1, -1, -1}, { +1, -1, +1}, { -1, +1, -1}, { +1, +1, +1}},
+        {{-1, -1,  +1}, {-1, +1,  +1}, {+1, -1,  -1}, {+1, +1,  -1}},
+        {{-1, -1,  +1}, {-1, +1,  +1}, {+1, -1,  -1}, {+1, +1,  -1}}
     };
     static const float normals[4][3] = {
         {-1, 0, 0},
@@ -273,6 +273,8 @@ void make_plant(
             px_m < 0 ? px_m += CHUNK_SIZE : px_m;
             float pz_m = fmod( pz, CHUNK_SIZE);
             pz_m < 0 ? pz_m += CHUNK_SIZE : pz_m;
+
+            vdp->uvScales = 0;
 
             int pxi = px_m + n * positions[i][j][0] + 0.5;
             int pyi = py + n * positions[i][j][1] + 0.5;
