@@ -82,6 +82,7 @@ typedef struct {
     int miny;
     int maxy;
     GLuint buffer;
+    GLuint indices_buffer;
     GLuint sign_buffer;
     UT_hash_handle hh;
 } Chunk;
@@ -96,6 +97,7 @@ typedef struct {
     int maxy;
     int faces;
     VertexData *data;
+    int *indices_data;
 } WorkerItem;
 
 typedef struct {
@@ -300,7 +302,7 @@ GLuint gen_sky_buffer() {
 
 GLuint gen_cube_buffer(float x, float y, float z, float n, int w) {
     // GLfloat *data = malloc_faces(8, 6);
-    void *data = malloc_faces_new(sizeof(VertexData), 6);
+    void *data = malloc_faces_new_player(sizeof(VertexData), 6);
     float ao[6][4] = {0};
     float light[6][4] = {
         {0.5, 0.5, 0.5, 0.5},
@@ -311,21 +313,21 @@ GLuint gen_cube_buffer(float x, float y, float z, float n, int w) {
         {0.5, 0.5, 0.5, 0.5}
     };
     //I dont get what ao is, it just leads to a buffer with zeroes everytime.
-    make_cube((VertexData *)data, ao, light, 1, 1, 1, 1, 1, 1, x, y, z, n, w);
+    make_cube_old((VertexData *)data, ao, light, 1, 1, 1, 1, 1, 1, x, y, z, n, w);
     return gen_faces_new(sizeof(VertexData), 6, data);
 }
 
 GLuint gen_plant_buffer(float x, float y, float z, float n, int w) {
-    void *data = malloc_faces_new(sizeof(VertexData), 4);
+    void *data = malloc_faces_new_player(sizeof(VertexData), 4);
     float ao = 0;
     float light = 1;
-    make_plant((VertexData *) data, ao, light, x, y, z, n, w, 45);
+    make_plant_old((VertexData *) data, ao, light, x, y, z, n, w, 45);
     return gen_faces_new(sizeof(VertexData), 4, data);
 }
 
 GLuint gen_player_buffer(float x, float y, float z, float rx, float ry) {
     // GLfloat *data = malloc_faces(10, 6);
-    VertexData *data = malloc_faces_new(sizeof(VertexData), 6);
+    VertexData *data = malloc_faces_new_player(sizeof(VertexData), 6);
     make_player(data, x, y, z, rx, ry);
     return gen_faces_new(sizeof(VertexData), 6, data);
 }
@@ -340,43 +342,43 @@ GLuint gen_text_buffer(float x, float y, float n, char *text) {
     return gen_faces(4, length, data);
 }
 
-void draw_chunk_triangles_3d_ao(Attrib *attrib, GLuint buffer, int count) {
+void draw_chunk_triangles_3d_ao_new(Attrib *attrib, GLuint buffer, GLuint indices_buffer, int count) {
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
-    //glEnableVertexAttribArray(attrib->position);
-    // glEnableVertexAttribArray(attrib->normal);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices_buffer);
+
     glEnableVertexAttribArray(attrib->uvts);
-    // glEnableVertexAttribArray(attrib->uv);
     glEnableVertexAttribArray(attrib->position_uint);
     glEnableVertexAttribArray(attrib->uvScales);
     
-    // glVertexAttribPointer(attrib->position, 3, GL_FLOAT, GL_FALSE,
-    //     sizeof(VertexData), 0);
     glVertexAttribPointer(attrib->position_uint, 1, GL_FLOAT, GL_FALSE, sizeof(VertexData), (GLvoid *)(offsetof(VertexData, xyz)));
     glVertexAttribPointer(attrib->uvts, 1, GL_FLOAT, GL_FALSE, sizeof(VertexData), (GLvoid *)(offsetof(VertexData, uvts)));
     glVertexAttribPointer(attrib->uvScales, 1, GL_FLOAT, GL_FALSE, sizeof(VertexData), (GLvoid *)(offsetof(VertexData, uvScales)));
-    // glVertexAttribPointer(attrib->position, 1, GL_FLOAT, GL_FALSE,
-    //     sizeof(VertexData), 0);
-    
-    //print size of VertexData:
-    //printf("sizeof(VertexData) = %d\n", sizeof(VertexData));
 
-    // glVertexAttribPointer(attrib->normal, 1, GL_FLOAT, GL_FALSE,
-    //     sizeof(VertexData), (GLvoid *)(offsetof(VertexData, diffuse_bake)));
-    // glVertexAttribPointer(attrib->normal, 3, GL_FLOAT, GL_FALSE,
-    //     sizeof(VertexData), (GLvoid *)(offsetof(VertexData, normal_flag)));
 
-    // glVertexAttribPointer(attrib->uv, 4, GL_FLOAT, GL_FALSE,
-    //     sizeof(VertexData), (GLvoid *)(offsetof(VertexData, u)));
-    // glVertexAttribPointer(attrib->uv, 4, GL_FLOAT, GL_FALSE,
-    //     sizeof(VertexData), (GLvoid *)(offsetof(VertexData, u)));
-
-    
-
-    glDrawArrays(GL_TRIANGLES, 0, count);
-    //glDisableVertexAttribArray(attrib->position);
-    // glDisableVertexAttribArray(attrib->normal);
+    //     GLenum error;
+    // if ((error = glGetError()) != GL_NO_ERROR) {
+    //     printf("OpenGL error after setting vertex attributes: %d\n", error);
+    // }
+    glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, 0);
     glDisableVertexAttribArray(attrib->uvts);
-    // glDisableVertexAttribArray(attrib->uv);
+    glDisableVertexAttribArray(attrib->position_uint);
+    glDisableVertexAttribArray(attrib->uvScales);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
+void draw_chunk_triangles_3d_ao(Attrib *attrib, GLuint buffer, int count) {
+    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    glEnableVertexAttribArray(attrib->uvts);
+    glEnableVertexAttribArray(attrib->position_uint);
+    glEnableVertexAttribArray(attrib->uvScales);
+    
+    glVertexAttribPointer(attrib->position_uint, 1, GL_FLOAT, GL_FALSE, sizeof(VertexData), (GLvoid *)(offsetof(VertexData, xyz)));
+    glVertexAttribPointer(attrib->uvts, 1, GL_FLOAT, GL_FALSE, sizeof(VertexData), (GLvoid *)(offsetof(VertexData, uvts)));
+    glVertexAttribPointer(attrib->uvScales, 1, GL_FLOAT, GL_FALSE, sizeof(VertexData), (GLvoid *)(offsetof(VertexData, uvScales)));
+    glDrawArrays(GL_TRIANGLES, 0, count);
+
+    glDisableVertexAttribArray(attrib->uvts);
     glDisableVertexAttribArray(attrib->position_uint);
     glDisableVertexAttribArray(attrib->uvScales);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -460,7 +462,7 @@ void draw_lines(Attrib *attrib, GLuint buffer, int components, int count) {
 void draw_chunk(Attrib *attrib, Chunk *chunk) {
     //Create own function to deal with custom data types
     glUniform2f(attrib->chunk_pos, chunk->key.p, chunk->key.q);
-    draw_chunk_triangles_3d_ao(attrib, chunk->buffer, chunk->faces * 6);
+    draw_chunk_triangles_3d_ao_new(attrib, chunk->buffer, chunk->indices_buffer, chunk->faces * 6);
     //draw_triangles_3d_ao(attrib, chunk->buffer, chunk->faces * 6);
 }
 
@@ -1204,11 +1206,14 @@ void compute_chunk_greedy(WorkerItem *item) {
     }
 
     Map *map = item->block_maps[1][1];
-    VertexData *data = (VertexData *) malloc_faces_new(sizeof(VertexData) * 6, CHUNK_SIZE * CHUNK_SIZE * 256 /4);
+    int guess_faces = CHUNK_SIZE * CHUNK_SIZE * 256 /4;
+    VertexData *data = (VertexData *) malloc_faces_new(sizeof(VertexData), guess_faces);
+    int *indices_data = (int *)malloc(sizeof(int) * 6 * guess_faces);
+
     int miny = 256;
     int maxy = 0;
     int faces = 0;
-    int offset = 0;
+    int offset = 0, offset_indices = 0;
 
     // int faces[6] = {left, right, top, bottom, front, back};
 
@@ -1360,8 +1365,9 @@ void compute_chunk_greedy(WorkerItem *item) {
                 float r_light[4];
                 occlusion_greedy(2, light[XYZ(xw, yw, zw)], neighbors, lights, shades, ao, r_light);
                 //make_cube_faces_new(data + offset, ao1, light1, 0,0,1,0,0,0,1,1,1,1,1,1,xw,yw,zw, .5f);
-                make_cube_face_greedy(data + offset, ao, r_light, 2, w,xw,yw,zw, .5f, x_length, 0, z_length);
-                offset += 6;
+                make_cube_face_greedy(data + offset, indices_data + offset_indices,offset, ao, r_light, 2, w,xw,yw,zw, .5f, x_length, 0, z_length);
+                offset += 4;
+                offset_indices += 6;
                 faces++;
                 //z += z_length;
                 }
@@ -1398,7 +1404,8 @@ void compute_chunk_greedy(WorkerItem *item) {
     // generate geometry
     // GLfloat *data = malloc_faces(10, faces);
     //Size of VertexData * 6 for each face, as each face produces 6 vertices.
-    data = (VertexData*)realloc(data, sizeof(VertexData) * 6 * 6  * faces);
+    data = (VertexData*)realloc(data, sizeof(VertexData) * 4 * faces);
+    indices_data = (int *)realloc(indices_data, sizeof(int) * 6 * faces);
     MAP_FOR_EACH(map, ex, ey, ez, ew) {
         if (ew <= 0) {
             continue;
@@ -1409,7 +1416,7 @@ void compute_chunk_greedy(WorkerItem *item) {
         int z = ez - oz;
         int f1 = !opaque[XYZ(x - 1, y, z)];
         int f2 = !opaque[XYZ(x + 1, y, z)];
-        int f3 = !opaque[XYZ(x, y + 1, z)];
+        // f3 = !opaque[XYZ(x, y + 1, z)];
         int f4 = !opaque[XYZ(x, y - 1, z)] && (ey > 0);
         int f5 = !opaque[XYZ(x, y, z - 1)];
         int f6 = !opaque[XYZ(x, y, z + 1)];
@@ -1455,17 +1462,18 @@ void compute_chunk_greedy(WorkerItem *item) {
             }
             float rotation = simplex2(ex, ez, 4, 0.5, 2) * 360;
             make_plant(
-                data + offset, min_ao, max_light,
+                data + offset, indices_data + offset_indices, offset, min_ao, max_light,
                 ex, ey, ez, 0.5, ew, rotation);
         }
         else {
             make_cube(
-                data + offset, ao, light,
+                data + offset, indices_data + offset_indices, offset, ao, light,
                 f1, f2, 0, f4, f5, f6,
                 ex, ey, ez, 0.5, ew);
         }
         //Offset is Total faces * 6, as the total amount of vertexdata increases by 6 for each face.
-        offset += total * 6;
+        offset += total * 4;
+        offset_indices += total * 6;
     } END_MAP_FOR_EACH;
 
     free(opaque);
@@ -1476,6 +1484,7 @@ void compute_chunk_greedy(WorkerItem *item) {
     item->maxy = maxy;
     item->faces = faces;
     item->data = data;
+    item->indices_data = indices_data;
 }
 
 void compute_chunk(WorkerItem *item) {
@@ -1585,8 +1594,10 @@ void compute_chunk(WorkerItem *item) {
     // generate geometry
     // GLfloat *data = malloc_faces(10, faces);
     //Size of VertexData * 6 for each face, as each face produces 6 vertices.
-    VertexData *data = (VertexData *) malloc_faces_new(sizeof(VertexData) * 6, faces);
-    int offset = 0;
+    VertexData *data = (VertexData *) malloc_faces_new(sizeof(VertexData), faces);
+    int *indices_data = (int *)malloc(sizeof(int) * 6 * faces);
+    int offset = 0, offset_indices = 0;
+
     MAP_FOR_EACH(map, ex, ey, ez, ew) {
         if (ew <= 0) {
             continue;
@@ -1643,17 +1654,19 @@ void compute_chunk(WorkerItem *item) {
             }
             float rotation = simplex2(ex, ez, 4, 0.5, 2) * 360;
             make_plant(
-                data + offset, min_ao, max_light,
+                data + offset, indices_data + offset_indices, offset, min_ao, max_light,
                 ex, ey, ez, 0.5, ew, rotation);
         }
         else {
             make_cube(
-                data + offset, ao, light,
+                data + offset, indices_data + offset_indices, offset, ao, light,
                 f1, f2, f3, f4, f5, f6,
                 ex, ey, ez, 0.5, ew);
         }
         //Offset is Total faces * 6, as the total amount of vertexdata increases by 6 for each face.
-        offset += total * 6;
+        
+        offset += total * 4;
+        offset_indices += total * 6;
     } END_MAP_FOR_EACH;
 
     free(opaque);
@@ -1664,16 +1677,22 @@ void compute_chunk(WorkerItem *item) {
     item->maxy = maxy;
     item->faces = faces;
     item->data = data;
+    item->indices_data = indices_data;
 }
 
+// TODODO
 void generate_chunk(Chunk *chunk, WorkerItem *item) {
     chunk->miny = item->miny;
     chunk->maxy = item->maxy;
     chunk->faces = item->faces;
     del_buffer(chunk->buffer);
+    del_buffer(chunk->indices_buffer);
     // chunk->buffer = gen_faces(8, item->faces, item->data);
     // chunk-> buffer = gen_faces(9, item->faces, item->data);
-    chunk->buffer = gen_faces_new(sizeof(VertexData), item->faces, item->data);
+
+    chunk->buffer = gen_faces_chunk(sizeof(VertexData), item->faces, item->data);
+    chunk->indices_buffer = gen_indices_chunk(item->faces, item->indices_data);
+
     //gen_sign_buffer(chunk);
 }
 
@@ -2162,6 +2181,7 @@ int render_chunks(Attrib *attrib, Player *player) {
     int result = 0;
     State *s = &player->state;
     ensure_chunks(player);
+
     int p = chunked(s->x);
     int q = chunked(s->z);
     float light = get_daylight();
@@ -2230,6 +2250,7 @@ int render_chunks(Attrib *attrib, Player *player) {
         // {
         //     continue;
         // }
+
         draw_chunk(attrib, chunk);
         result += chunk->faces;
     }
@@ -3404,7 +3425,7 @@ int main(int argc, char **argv) {
             g->scale = get_scale_factor();
             glfwGetFramebufferSize(g->window, &g->width, &g->height);
             glViewport(0, 0, g->width, g->height);
-
+            
             // FRAME RATE //
             if (g->time_changed) {
                 g->time_changed = 0;
@@ -3418,7 +3439,7 @@ int main(int argc, char **argv) {
             dt = MIN(dt, 0.2);
             dt = MAX(dt, 0.0);
             previous = now;
-
+            
             // HANDLE MOUSE INPUT //
             handle_mouse_input();
 
@@ -3447,14 +3468,14 @@ int main(int argc, char **argv) {
             // PREPARE TO RENDER //
             g->observe1 = g->observe1 % g->player_count;
             g->observe2 = g->observe2 % g->player_count;
-
+            
             del_buffer(me->buffer);
             me->buffer = gen_player_buffer(s->x, s->y, s->z, s->rx, s->ry);
             for (int i = 1; i < g->player_count; i++) {
                 interpolate_player(g->players + i);
             }
             Player *player = g->players + g->observe1;
-
+            
             // UPDATE CHUNKED POS // 
             int n_chunked_p = chunked(player->state.x);
             int n_chunked_q = chunked(player->state.z);
@@ -3463,7 +3484,7 @@ int main(int argc, char **argv) {
                 chunked_q = n_chunked_q;
             }
             delete_chunks();
-           
+
             // printf("We get here");
             // RENDER 3-D SCENE //
             glClear(GL_COLOR_BUFFER_BIT);
@@ -3474,8 +3495,10 @@ int main(int argc, char **argv) {
             //int face_count = 0;
             render_signs(&text_attrib, player);
             render_sign(&text_attrib, player);
+
             // //TODO: FIX PALYERS RENDER
             render_players(&block_attrib, player);
+            
             if (SHOW_WIREFRAME) {
                 render_wireframe(&line_attrib, player);
             }
@@ -3484,10 +3507,12 @@ int main(int argc, char **argv) {
             if (SHOW_CROSSHAIRS) {
                 render_crosshairs(&line_attrib);
             }
+            
             if (SHOW_ITEM) {
                 //TODO: TURN ON SHOW ITEM AGAIN
                 render_item(&block_attrib);
             }
+
 //END OF FREEZE
             // RENDER TEXT //
             char text_buffer[1024];

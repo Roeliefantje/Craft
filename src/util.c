@@ -51,7 +51,7 @@ GLuint gen_buffer(GLsizei size, GLfloat *data) {
     return buffer;
 }
 
-
+// TODODO
 GLuint gen_buffer_new(GLsizei size, void* data) {
     GLuint buffer;
     glGenBuffers(1, &buffer);
@@ -71,6 +71,10 @@ GLfloat *malloc_faces(int components, int faces) {
 }
 
 void *malloc_faces_new( unsigned long long vertexDataSize, int faces) {
+    return malloc(vertexDataSize * 4 * faces);
+}
+
+void *malloc_faces_new_player( unsigned long long vertexDataSize, int faces) {
     return malloc(vertexDataSize * 6 * faces);
 }
 
@@ -78,6 +82,25 @@ void *malloc_faces_new( unsigned long long vertexDataSize, int faces) {
 GLuint gen_faces(int components, int faces, GLfloat *data) {
     GLuint buffer = gen_buffer(
         sizeof(GLfloat) * 6 * components * faces, data);
+    free(data);
+    return buffer;
+}
+
+// TODODO
+GLuint gen_faces_chunk(unsigned long long  vertexDataSize, int faces, void * data) {
+    GLuint buffer = gen_buffer_new(
+        vertexDataSize * 4 * faces, data);
+    free(data);
+    return buffer;
+}
+
+// TODODO
+GLuint gen_indices_chunk(int faces, void * data) {
+    GLuint buffer;
+    glGenBuffers(1, &buffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * 6 * faces, data, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     free(data);
     return buffer;
 }

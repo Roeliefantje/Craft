@@ -7,7 +7,7 @@
 const float normalized_light_direction[3] = { -0.577350f, 0.577350f, -0.577350f };
 
 void make_cube_face_greedy(
-    VertexData *data, float ao[4], float light[4],
+    VertexData *data, int *indices_data, int vert_offset, float ao[4], float light[4],
     int face_dir, int w,
     float x, float y, float z, float n,
     unsigned int x_length, unsigned int y_length, unsigned int z_length)
@@ -75,8 +75,7 @@ void make_cube_face_greedy(
     VertexData *vdp = (VertexData*)data;
 
     int flip = ao[0] + ao[3] > ao[1] + ao[2];
-    for (int v = 0; v < 6; v++) {
-        int j = flip ? flipped[face_dir][v] : indices[face_dir][v];
+    for (int vert = 0; vert < 4; vert++) {
 
         float x_modulo = fmod(x, CHUNK_SIZE);
         x_modulo < 1 ? x_modulo += CHUNK_SIZE : x_modulo;
@@ -84,9 +83,9 @@ void make_cube_face_greedy(
         z_modulo < 1 ? z_modulo += CHUNK_SIZE : z_modulo;
 
         float pos[3] ={
-            ((n * positions[face_dir][0]) + (offsets[face_dir][j][0] * x_length - n)),
-            ((n * positions[face_dir][1]) + (offsets[face_dir][j][1] * y_length - n)),
-            ((n * positions[face_dir][2]) + (offsets[face_dir][j][2] * z_length - n)),
+            ((n * positions[face_dir][0]) + (offsets[face_dir][vert][0] * x_length - n)),
+            ((n * positions[face_dir][1]) + (offsets[face_dir][vert][1] * y_length - n)),
+            ((n * positions[face_dir][2]) + (offsets[face_dir][vert][2] * z_length - n)),
         };
         unsigned int xi = x_modulo + pos[0] + 0.5;
         unsigned int yi = y + pos[1] + 0.5;
@@ -94,19 +93,320 @@ void make_cube_face_greedy(
 
 
         vdp->xyz = ((xi & 0xFF) << 24) | ((yi & 0xFF) << 16) | ((zi & 0xFF) << 8) | normal_flags[face_dir];
-        vdp->uvScales = (((uvs[face_dir][j][0] ? x_length : 0) & 0xFF) << 24) | (((uvs[face_dir][j][1] ? z_length  : 0) & 0xFF) << 16);
+        vdp->uvScales = (((uvs[face_dir][vert][0] ? x_length : 0) & 0xFF) << 24) | (((uvs[face_dir][vert][1] ? z_length  : 0) & 0xFF) << 16);
 
-        int u = dui + (uvs[face_dir][j][0] ? x_length : 0); //MAXVALUE = 15, 4 bits
-        int v = dvi + (uvs[face_dir][j][1] ? z_length : 0); //MAXVALUE = 15, 4 bits
-        int t = ao[j] * 2; //MAXVALUE = 2, 2 bits 
-        int s = light[j] * 16; //MAXVALUE = 15 4 bits
+        int u = dui + (uvs[face_dir][vert][0] ? x_length : 0); //MAXVALUE = 15, 4 bits
+        int v = dvi + (uvs[face_dir][vert][1] ? z_length : 0); //MAXVALUE = 15, 4 bits
+        int t = ao[vert] * 2; //MAXVALUE = 2, 2 bits 
+        int s = light[vert] * 16; //MAXVALUE = 15 4 bits
 
         vdp->uvts = ((u & 0xFF) << 24) | ((v & 0xFF) << 16) | ((t & 0xFF) << 8) | s;
         *(vdp++);
     }
+
+    // Increment indices
+    int *indp = (int*)indices_data; 
+    for (int ind = 0; ind < 6; ind++){
+        int j = flip ? flipped[face_dir][ind] : indices[face_dir][ind];
+        *indp = vert_offset + j;
+        *(indp++);
+    }
 }
 
 void make_cube_faces(
+    VertexData *data, int *indices_data, int vert_offset, float ao[6][4], float light[6][4],
+    int left, int right, int top, int bottom, int front, int back,
+    int wleft, int wright, int wtop, int wbottom, int wfront, int wback,
+    float x, float y, float z, float n)
+{
+    static const float positions[6][4][3] = {
+        {{-1, -1, -1}, {-1, -1, +1}, {-1, +1, -1}, {-1, +1, +1}},
+        {{+1, -1, -1}, {+1, -1, +1}, {+1, +1, -1}, {+1, +1, +1}},
+        {{-1, +1, -1}, {-1, +1, +1}, {+1, +1, -1}, {+1, +1, +1}},
+        {{-1, -1, -1}, {-1, -1, +1}, {+1, -1, -1}, {+1, -1, +1}},
+        {{-1, -1, -1}, {-1, +1, -1}, {+1, -1, -1}, {+1, +1, -1}},
+        {{-1, -1, +1}, {-1, +1, +1}, {+1, -1, +1}, {+1, +1, +1}}
+    };
+    static const float normals[6][3] = {
+        {-1, 0, 0},
+        {+1, 0, 0},
+        {0, +1, 0},
+        {0, -1, 0},
+        {0, 0, -1},
+        {0, 0, +1}
+    };
+
+    static const unsigned int normal_flags[6] = {
+        0, 1, 2, 3, 4, 5,
+    };
+
+
+    static const float uvs[6][4][2] = {
+        {{0, 0}, {1, 0}, {0, 1}, {1, 1}},
+        {{1, 0}, {0, 0}, {1, 1}, {0, 1}},
+        {{0, 1}, {0, 0}, {1, 1}, {1, 0}},
+        {{0, 0}, {0, 1}, {1, 0}, {1, 1}},
+        {{0, 0}, {0, 1}, {1, 0}, {1, 1}},
+        {{1, 0}, {1, 1}, {0, 0}, {0, 1}}
+    };
+    static const float indices[6][6] = {
+        {0, 3, 2, 0, 1, 3},
+        {0, 3, 1, 0, 2, 3},
+        {0, 3, 2, 0, 1, 3},
+        {0, 3, 1, 0, 2, 3},
+        {0, 3, 2, 0, 1, 3},
+        {0, 3, 1, 0, 2, 3}
+    };
+    static const float flipped[6][6] = {
+        {0, 1, 2, 1, 3, 2},
+        {0, 2, 1, 2, 3, 1},
+        {0, 1, 2, 1, 3, 2},
+        {0, 2, 1, 2, 3, 1},
+        {0, 1, 2, 1, 3, 2},
+        {0, 2, 1, 2, 3, 1}
+    };
+    //float *d = data;
+    VertexData *vdp = (VertexData*)data;
+    int *indp = (int*)indices_data; 
+
+    float s = 0.0625;
+    float a = 0 + 1 / 2048.0;
+    float b = s - 1 / 2048.0;
+    int faces[6] = {left, right, top, bottom, front, back};
+    int tiles[6] = {wleft, wright, wtop, wbottom, wfront, wback};
+    int added_offset = 0;
+    for (int i = 0; i < 6; i++) {
+        if (faces[i] == 0) {
+            continue;
+        }
+        
+        float du = (tiles[i] % 16) * s;
+        float dv = (tiles[i] / 16) * s;
+        int dui = (tiles[i] % 16);
+        int dvi = (tiles[i] / 16);
+
+        int flip = ao[i][0] + ao[i][3] > ao[i][1] + ao[i][2];
+        for (int vert = 0; vert < 4; vert++) {
+            float x_modulo = fmod(x, CHUNK_SIZE);
+            x_modulo < 0 ? x_modulo += CHUNK_SIZE : x_modulo;
+            float z_modulo = fmod(z, CHUNK_SIZE);
+            z_modulo < 0 ? z_modulo += CHUNK_SIZE : z_modulo;
+
+            unsigned int xi = x_modulo + n * positions[i][vert][0] + 0.5; //MAX VALUE 31, 5 bits
+            unsigned int yi = y + n * positions[i][vert][1] + 0.5; //MAX VALUE 254, 8 bits
+            unsigned int zi = z_modulo + n * positions[i][vert][2] + 0.5; //MAX VALUE 31, 5 bits
+                                                          //Normal flags MAX VALUE 10, 4 bits
+            vdp->uvScales = 0;
+                             
+            vdp->xyz = ((xi & 0xFF) << 24) | ((yi & 0xFF) << 16) | ((zi & 0xFF) << 8) | normal_flags[i];
+            int u = dui + (uvs[i][vert][0] ? 1 : 0); //MAXVALUE = 15, 4 bits
+            int v = dvi + (uvs[i][vert][1] ? 1 : 0); //MAXVALUE = 15, 4 bits
+            int t = ao[i][vert] * 2; //MAXVALUE = 2, 2 bits 
+            int s = light[i][vert] * 16; //MAXVALUE = 15 4 bits
+
+            vdp->uvts = ((u & 0xFF) << 24) | ((v & 0xFF) << 16) | ((t & 0xFF) << 8) | s;
+            
+            *(vdp++);
+        }
+
+        // Increment indices
+        for (int ind = 0; ind < 6; ind++){
+            int j = flip ? flipped[i][ind] : indices[i][ind];
+            *indp = vert_offset + added_offset + j;
+            *(indp++);
+        }
+        
+        added_offset+= 4;
+    }
+}
+
+void make_cube(
+    VertexData *data, int *indices_data, int vert_offset, float ao[6][4], float light[6][4],
+    int left, int right, int top, int bottom, int front, int back,
+    float x, float y, float z, float n, int w)
+{
+    int wleft = blocks[w][0];
+    int wright = blocks[w][1];
+    int wtop = blocks[w][2];
+    int wbottom = blocks[w][3];
+    int wfront = blocks[w][4];
+    int wback = blocks[w][5];
+    make_cube_faces(
+        data,indices_data,vert_offset, ao, light,
+        left, right, top, bottom, front, back,
+        wleft, wright, wtop, wbottom, wfront, wback,
+        x, y, z, n);
+}
+
+void make_plant(
+    VertexData *data, int *indices_data, int vert_offset, float ao, float light,
+    float px, float py, float pz, float n, int w, float rotation)
+{
+    //printf("Making plant");
+    static const float positions[4][4][3] = {
+        {{ -1, -1, -1}, { +1, -1, +1}, { -1, +1, -1}, { +1, +1, +1}},
+        {{ -1, -1, -1}, { +1, -1, +1}, { -1, +1, -1}, { +1, +1, +1}},
+        {{-1, -1,  +1}, {-1, +1,  +1}, {+1, -1,  -1}, {+1, +1,  -1}},
+        {{-1, -1,  +1}, {-1, +1,  +1}, {+1, -1,  -1}, {+1, +1,  -1}}
+    };
+    static const float normals[4][3] = {
+        {-1, 0, 0},
+        {+1, 0, 0},
+        {0, 0, -1},
+        {0, 0, +1}
+    };
+
+    static const unsigned int normal_flags[4] = {
+        6, 7, 8, 9,
+    };
+
+    static const float uvs[4][4][2] = {
+        {{0, 0}, {1, 0}, {0, 1}, {1, 1}},
+        {{1, 0}, {0, 0}, {1, 1}, {0, 1}},
+        {{0, 0}, {0, 1}, {1, 0}, {1, 1}},
+        {{1, 0}, {1, 1}, {0, 0}, {0, 1}}
+    };
+    static const float indices[4][6] = {
+        {0, 3, 2, 0, 1, 3},
+        {0, 3, 1, 0, 2, 3},
+        {0, 3, 2, 0, 1, 3},
+        {0, 3, 1, 0, 2, 3}
+    };
+    //float *d = data;
+    VertexData *vdp = data;
+    int *indp = (int*)indices_data; 
+
+    float s = 0.0625;
+    float a = 0;
+    float b = s;
+    float du = (plants[w] % 16) * s;
+    float dv = (plants[w] / 16) * s;
+    int dui = (plants[w] % 16);
+    int dvi = (plants[w] / 16);
+    // printf("Start of new plant\n");
+    for (int i = 0; i < 4; i++) {
+        // printf("Start of new face\n");
+        for (int vert = 0; vert < 4; vert++) {
+
+            float px_m = fmod( px, CHUNK_SIZE);
+            px_m < 0 ? px_m += CHUNK_SIZE : px_m;
+            float pz_m = fmod( pz, CHUNK_SIZE);
+            pz_m < 0 ? pz_m += CHUNK_SIZE : pz_m;
+
+            vdp->uvScales = 0;
+
+            int pxi = px_m + n * positions[i][vert][0] + 0.5;
+            int pyi = py + n * positions[i][vert][1] + 0.5;
+            int pzi = pz_m + n * positions[i][vert][2] + 0.5;
+            vdp->xyz = ((pxi & 0xFF) << 24) | ((pyi & 0xFF) << 16) | ((pzi & 0xFF) << 8) | normal_flags[i];
+            int u = dui + (uvs[i][vert][0] ? 1 : 0);
+            int v = dvi + (uvs[i][vert][1] ? 1 : 0);
+            int t = ao * 2; //MAXVALUE = 2, 2 bits 
+            int s = light * 16; //MAXVALUE = 15 4 bits
+            vdp->uvts = ((u & 0xFF) << 24) | ((v & 0xFF) << 16) | ((t & 0xFF) << 8) | s;
+
+            *(vdp++);
+        }
+
+        // Increment indices
+        for (int ind = 0; ind < 6; ind++){
+            int j = indices[i][ind];
+            *indp = vert_offset + i*4 + j;
+            *(indp++);
+        }
+    }
+}
+
+void make_cube_old(
+    VertexData *data, float ao[6][4], float light[6][4],
+    int left, int right, int top, int bottom, int front, int back,
+    float x, float y, float z, float n, int w)
+{
+    int wleft = blocks[w][0];
+    int wright = blocks[w][1];
+    int wtop = blocks[w][2];
+    int wbottom = blocks[w][3];
+    int wfront = blocks[w][4];
+    int wback = blocks[w][5];
+    make_cube_faces_old(
+        data, ao, light,
+        left, right, top, bottom, front, back,
+        wleft, wright, wtop, wbottom, wfront, wback,
+        x, y, z, n);
+}
+
+void make_plant_old(
+    VertexData *data, float ao, float light,
+    float px, float py, float pz, float n, int w, float rotation)
+{
+    //printf("Making plant");
+    static const float positions[4][4][3] = {
+        {{ -1, -1, -1}, { +1, -1, +1}, { -1, +1, -1}, { +1, +1, +1}},
+        {{ -1, -1, -1}, { +1, -1, +1}, { -1, +1, -1}, { +1, +1, +1}},
+        {{-1, -1,  +1}, {-1, +1,  +1}, {+1, -1,  -1}, {+1, +1,  -1}},
+        {{-1, -1,  +1}, {-1, +1,  +1}, {+1, -1,  -1}, {+1, +1,  -1}}
+    };
+    static const float normals[4][3] = {
+        {-1, 0, 0},
+        {+1, 0, 0},
+        {0, 0, -1},
+        {0, 0, +1}
+    };
+
+    static const unsigned int normal_flags[4] = {
+        6, 7, 8, 9,
+    };
+
+    static const float uvs[4][4][2] = {
+        {{0, 0}, {1, 0}, {0, 1}, {1, 1}},
+        {{1, 0}, {0, 0}, {1, 1}, {0, 1}},
+        {{0, 0}, {0, 1}, {1, 0}, {1, 1}},
+        {{1, 0}, {1, 1}, {0, 0}, {0, 1}}
+    };
+    static const float indices[4][6] = {
+        {0, 3, 2, 0, 1, 3},
+        {0, 3, 1, 0, 2, 3},
+        {0, 3, 2, 0, 1, 3},
+        {0, 3, 1, 0, 2, 3}
+    };
+    //float *d = data;
+    VertexData *vdp = data;
+    float s = 0.0625;
+    float a = 0;
+    float b = s;
+    float du = (plants[w] % 16) * s;
+    float dv = (plants[w] / 16) * s;
+    int dui = (plants[w] % 16);
+    int dvi = (plants[w] / 16);
+    // printf("Start of new plant\n");
+    for (int i = 0; i < 4; i++) {
+        // printf("Start of new face\n");
+        for (int v = 0; v < 6; v++) {
+            int j = indices[i][v];
+
+            float px_m = fmod( px, CHUNK_SIZE);
+            px_m < 0 ? px_m += CHUNK_SIZE : px_m;
+            float pz_m = fmod( pz, CHUNK_SIZE);
+            pz_m < 0 ? pz_m += CHUNK_SIZE : pz_m;
+
+            vdp->uvScales = 0;
+
+            int pxi = px_m + n * positions[i][j][0] + 0.5;
+            int pyi = py + n * positions[i][j][1] + 0.5;
+            int pzi = pz_m + n * positions[i][j][2] + 0.5;
+            vdp->xyz = ((pxi & 0xFF) << 24) | ((pyi & 0xFF) << 16) | ((pzi & 0xFF) << 8) | normal_flags[i];
+            int u = dui + (uvs[i][j][0] ? 1 : 0);
+            int v = dvi + (uvs[i][j][1] ? 1 : 0);
+            int t = ao * 2; //MAXVALUE = 2, 2 bits 
+            int s = light * 16; //MAXVALUE = 15 4 bits
+            vdp->uvts = ((u & 0xFF) << 24) | ((v & 0xFF) << 16) | ((t & 0xFF) << 8) | s;
+
+            *(vdp++);
+        }
+    }
+}
+
+void make_cube_faces_old(
     VertexData *data, float ao[6][4], float light[6][4],
     int left, int right, int top, int bottom, int front, int back,
     int wleft, int wright, int wtop, int wbottom, int wfront, int wback,
@@ -202,95 +502,6 @@ void make_cube_faces(
     }
 }
 
-void make_cube(
-    VertexData *data, float ao[6][4], float light[6][4],
-    int left, int right, int top, int bottom, int front, int back,
-    float x, float y, float z, float n, int w)
-{
-    int wleft = blocks[w][0];
-    int wright = blocks[w][1];
-    int wtop = blocks[w][2];
-    int wbottom = blocks[w][3];
-    int wfront = blocks[w][4];
-    int wback = blocks[w][5];
-    make_cube_faces(
-        data, ao, light,
-        left, right, top, bottom, front, back,
-        wleft, wright, wtop, wbottom, wfront, wback,
-        x, y, z, n);
-}
-
-void make_plant(
-    VertexData *data, float ao, float light,
-    float px, float py, float pz, float n, int w, float rotation)
-{
-    //printf("Making plant");
-    static const float positions[4][4][3] = {
-        {{ -1, -1, -1}, { +1, -1, +1}, { -1, +1, -1}, { +1, +1, +1}},
-        {{ -1, -1, -1}, { +1, -1, +1}, { -1, +1, -1}, { +1, +1, +1}},
-        {{-1, -1,  +1}, {-1, +1,  +1}, {+1, -1,  -1}, {+1, +1,  -1}},
-        {{-1, -1,  +1}, {-1, +1,  +1}, {+1, -1,  -1}, {+1, +1,  -1}}
-    };
-    static const float normals[4][3] = {
-        {-1, 0, 0},
-        {+1, 0, 0},
-        {0, 0, -1},
-        {0, 0, +1}
-    };
-
-    static const unsigned int normal_flags[4] = {
-        6, 7, 8, 9,
-    };
-
-    static const float uvs[4][4][2] = {
-        {{0, 0}, {1, 0}, {0, 1}, {1, 1}},
-        {{1, 0}, {0, 0}, {1, 1}, {0, 1}},
-        {{0, 0}, {0, 1}, {1, 0}, {1, 1}},
-        {{1, 0}, {1, 1}, {0, 0}, {0, 1}}
-    };
-    static const float indices[4][6] = {
-        {0, 3, 2, 0, 1, 3},
-        {0, 3, 1, 0, 2, 3},
-        {0, 3, 2, 0, 1, 3},
-        {0, 3, 1, 0, 2, 3}
-    };
-    //float *d = data;
-    VertexData *vdp = data;
-    float s = 0.0625;
-    float a = 0;
-    float b = s;
-    float du = (plants[w] % 16) * s;
-    float dv = (plants[w] / 16) * s;
-    int dui = (plants[w] % 16);
-    int dvi = (plants[w] / 16);
-    // printf("Start of new plant\n");
-    for (int i = 0; i < 4; i++) {
-        // printf("Start of new face\n");
-        for (int v = 0; v < 6; v++) {
-            int j = indices[i][v];
-
-            float px_m = fmod( px, CHUNK_SIZE);
-            px_m < 0 ? px_m += CHUNK_SIZE : px_m;
-            float pz_m = fmod( pz, CHUNK_SIZE);
-            pz_m < 0 ? pz_m += CHUNK_SIZE : pz_m;
-
-            vdp->uvScales = 0;
-
-            int pxi = px_m + n * positions[i][j][0] + 0.5;
-            int pyi = py + n * positions[i][j][1] + 0.5;
-            int pzi = pz_m + n * positions[i][j][2] + 0.5;
-            vdp->xyz = ((pxi & 0xFF) << 24) | ((pyi & 0xFF) << 16) | ((pzi & 0xFF) << 8) | normal_flags[i];
-            int u = dui + (uvs[i][j][0] ? 1 : 0);
-            int v = dvi + (uvs[i][j][1] ? 1 : 0);
-            int t = ao * 2; //MAXVALUE = 2, 2 bits 
-            int s = light * 16; //MAXVALUE = 15 4 bits
-            vdp->uvts = ((u & 0xFF) << 24) | ((v & 0xFF) << 16) | ((t & 0xFF) << 8) | s;
-
-            *(vdp++);
-        }
-    }
-}
-
 void make_player(
     VertexData *data,
     float x, float y, float z, float rx, float ry)
@@ -304,7 +515,7 @@ void make_player(
         {0.8, 0.8, 0.8, 0.8},
         {0.8, 0.8, 0.8, 0.8}
     };
-    make_cube_faces(
+    make_cube_faces_old(
         data, ao, light,
         1, 1, 1, 1, 1, 1,
         226, 224, 241, 209, 225, 227,
