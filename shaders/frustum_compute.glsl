@@ -53,24 +53,24 @@ layout(std430, binding = 1) buffer OutputBuffer {
 //     return 1;
 
 void main() {
-    if(gl_GlobalInvocationID.x >= RENDER_CHUNK_RADIUS * 2 || gl_GlobalInvocationID.y >= RENDER_CHUNK_RADIUS * 2)
+    if(gl_GlobalInvocationID.x >= RENDER_CHUNK_RADIUS * 2 / 4 || gl_GlobalInvocationID.y >= RENDER_CHUNK_RADIUS * 2)
         return;
 
-    uint gid = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * RENDER_CHUNK_RADIUS * 2;
+    uint gid = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * RENDER_CHUNK_RADIUS * 2 / 4;
 
     float planes[6][4];
-    for (int p = 0; p < 6; p++){
-        int offset = p * 4;
-        planes[p][0] = data[offset]; 
-        planes[p][1] = data[offset + 1]; 
-        planes[p][2] = data[offset + 2]; 
-        planes[p][3] = data[offset + 3]; 
+    for (int pl = 0; pl < 6; pl++){
+        int offset = pl * 4;
+        planes[pl][0] = data[offset]; 
+        planes[pl][1] = data[offset + 1]; 
+        planes[pl][2] = data[offset + 2]; 
+        planes[pl][3] = data[offset + 3]; 
     }
 
     int combined_result = 0;
     for(int p = 0; p < 4; p++){
-        float x = ((float(gl_GlobalInvocationID.x) * 4) + p - RENDER_CHUNK_RADIUS) * CHUNK_SIZE - 1;
-        float z = (float(gl_GlobalInvocationID.y) * 4 - RENDER_CHUNK_RADIUS) * CHUNK_SIZE - 1;
+        float x = ((float(gl_GlobalInvocationID.x * 4 + p)) - RENDER_CHUNK_RADIUS) * CHUNK_SIZE - 1;
+        float z = (float(gl_GlobalInvocationID.y) - RENDER_CHUNK_RADIUS) * CHUNK_SIZE - 1;
         float d = CHUNK_SIZE + 1;
         float points[8][3] = {
             {x + 0, MIN_Y, z + 0},
@@ -105,10 +105,10 @@ void main() {
 
         }
 
-        combined_result |= visible << ((3 - p) * 8);
+        combined_result |= (visible << ((p) * 8));
     }
 
 
-
     result[gid] = combined_result;
+    //result[gid] = 1 + 256 + 65536 + 16777216;
 }
