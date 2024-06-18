@@ -67,41 +67,48 @@ void main() {
         planes[p][3] = data[offset + 3]; 
     }
 
-    float x = (float(gl_GlobalInvocationID.x) - RENDER_CHUNK_RADIUS) * CHUNK_SIZE - 1 ;
-    float z = (float(gl_GlobalInvocationID.y) - RENDER_CHUNK_RADIUS) * CHUNK_SIZE - 1;
-    float d = CHUNK_SIZE + 1;
-    float points[8][3] = {
-        {x + 0, MIN_Y, z + 0},
-        {x + d, MIN_Y, z + 0},
-        {x + 0, MIN_Y, z + d},
-        {x + d, MIN_Y, z + d},
-        {x + 0, MAX_Y, z + 0},
-        {x + d, MAX_Y, z + 0},
-        {x + 0, MAX_Y, z + d},
-        {x + d, MAX_Y, z + d}
-    };
+    int combined_result = 0;
+    for(int p = 0; p < 4; p++){
+        float x = ((float(gl_GlobalInvocationID.x) * 4) + p - RENDER_CHUNK_RADIUS) * CHUNK_SIZE - 1;
+        float z = (float(gl_GlobalInvocationID.y) * 4 - RENDER_CHUNK_RADIUS) * CHUNK_SIZE - 1;
+        float d = CHUNK_SIZE + 1;
+        float points[8][3] = {
+            {x + 0, MIN_Y, z + 0},
+            {x + d, MIN_Y, z + 0},
+            {x + 0, MIN_Y, z + d},
+            {x + d, MIN_Y, z + d},
+            {x + 0, MAX_Y, z + 0},
+            {x + d, MAX_Y, z + 0},
+            {x + 0, MAX_Y, z + d},
+            {x + d, MAX_Y, z + d}
+        };
 
-    int visible = 1;
-    for (int i = 0; i < 6; i++){
-        int inside = 0;
-        for (int j = 0; j < 8; j++) {
-            float d =
-                planes[i][0] * points[j][0] +
-                planes[i][1] * points[j][1] +
-                planes[i][2] * points[j][2] +
-                planes[i][3];
-            if (d >= 0) {
-                inside = 1;
+        int visible = 1;
+        for (int i = 0; i < 6; i++){
+            int inside = 0;
+            for (int j = 0; j < 8; j++) {
+                float d =
+                    planes[i][0] * points[j][0] +
+                    planes[i][1] * points[j][1] +
+                    planes[i][2] * points[j][2] +
+                    planes[i][3];
+                if (d >= 0) {
+                    inside = 1;
+                    break;
+                }
+            }
+
+            if(inside == 0){
+                visible = 0;
                 break;
             }
+
         }
 
-        if(inside == 0){
-            visible = 0;
-            break;
-        }
-
+        combined_result |= visible << ((3 - p) * 8);
     }
 
-    result[gid] = visible;
+
+
+    result[gid] = combined_result;
 }

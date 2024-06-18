@@ -155,7 +155,7 @@ typedef struct {
     GLuint compute_planes_input;
     GLuint compute_output;
     GLsync compute_sync;
-    int* lookup_table;
+    char* lookup_table;
 } Attrib;
 
 typedef struct {
@@ -2188,11 +2188,9 @@ int render_chunks(Attrib *attrib, Player *player) {
         attrib->compute_sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
     }
     
-    
-
     GLenum waitReturn = glClientWaitSync( attrib->compute_sync, GL_SYNC_FLUSH_COMMANDS_BIT, 0);
     if (waitReturn == GL_ALREADY_SIGNALED || waitReturn == GL_CONDITION_SATISFIED) {
-        int visibililitylookup[RENDER_CHUNK_RADIUS * RENDER_CHUNK_RADIUS * 4];
+        char visibililitylookup[RENDER_CHUNK_RADIUS * RENDER_CHUNK_RADIUS * 4]; //4096 ints
         readBuffer(attrib->compute_output, sizeof(visibililitylookup), visibililitylookup);
         attrib->lookup_table = visibililitylookup;
 
@@ -2201,7 +2199,7 @@ int render_chunks(Attrib *attrib, Player *player) {
         glMemoryBarrier( GL_SHADER_STORAGE_BARRIER_BIT);
         attrib->compute_sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
     } else {
-        printf("compute not done yet");
+        printf("compute not done yet\n");
     }
     
     if (attrib->lookup_table == NULL) {
@@ -3284,7 +3282,7 @@ int main(int argc, char **argv) {
     //BIND COMPUTE SHADER THINGS
     program = load_compute_program("shaders/frustum_compute.glsl");
     block_attrib.compute_program = program;
-    block_attrib.compute_output = createComputeBuffer(GL_SHADER_STORAGE_BUFFER, sizeof(int) * RENDER_CHUNK_RADIUS * RENDER_CHUNK_RADIUS * 4, NULL, GL_DYNAMIC_READ);
+    block_attrib.compute_output = createComputeBuffer(GL_SHADER_STORAGE_BUFFER, sizeof(char) * RENDER_CHUNK_RADIUS * RENDER_CHUNK_RADIUS * 4, NULL, GL_DYNAMIC_READ);
     block_attrib.compute_planes_input = createComputeBuffer(GL_SHADER_STORAGE_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
 
 
