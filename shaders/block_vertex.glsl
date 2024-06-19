@@ -33,14 +33,14 @@ const vec3 normals[10] = vec3[](vec3(-1, 0, 0), vec3(1, 0, 0), vec3(0, 1, 0), ve
 normalize(vec3(1,0,-1)), normalize(vec3(-1,0,1)), normalize(vec3(-1,0,-1)), normalize(vec3(1,0,1))); //Plants
 
 vec4 getPosition(uint pos) {
-    float x = int(pos >> 24);
-    float y = int(pos >> 16) & 0xFF;
-    float z = int(pos >> 8) & 0xFF;
+    float x = int(pos >> 26);
+    float y = int(pos >> 18) & 0xFF;
+    float z = int(pos >> 12) & 0x3F;
     return vec4(x, y, z, 1);
 }
 
 vec3 getNormal(uint pos) {
-    int flag = int(pos) & 0xFF;
+    int flag = int(pos << 8) & 0x0F;
     return normals[flag];
 }
 
@@ -63,18 +63,18 @@ vec2 getUV(uint uvts) {
 }
 
 float getAO(uint uvts) {
-    int ao = int(uvts >> 8) & 0xFF;
+    int ao = int(uvts >> 14) & 0x03;
     
     return 0.3 + (1.0 - ao / 2.0) * 0.7;
 }
 
 float getLight(uint uvts) {
-    int light = int(uvts) & 0xFF;
-    return light / 16.0;
+    int light = int(uvts >> 10) & 0x0F;
+    return light / 15.0;
 }
 
-vec2 getUVScalar(uint uvScales){
-    return vec2(int(uvScales >> 24), int(uvScales >> 16)& 0xFF);
+vec2 getUVScalar(uint pos, uint uvts){
+    return vec2(int(uvts) & 0xFF, int(pos) & 0xFF);
 }
 
 void main() {
@@ -99,7 +99,7 @@ void main() {
 
     gl_Position = matrix * converted_position;
 
-    uv_scalar = getUVScalar(uvScales);
+    uv_scalar = getUVScalar(position_uint, uvts);
 
     fragment_uv = getUV(uvts);
     // fragment_uv = uv.xy;

@@ -348,11 +348,11 @@ void draw_chunk_triangles_3d_ao_new(Attrib *attrib, GLuint buffer, GLuint indice
 
     glEnableVertexAttribArray(attrib->uvts);
     glEnableVertexAttribArray(attrib->position_uint);
-    glEnableVertexAttribArray(attrib->uvScales);
+    // glEnableVertexAttribArray(attrib->uvScales);
     
     glVertexAttribPointer(attrib->position_uint, 1, GL_FLOAT, GL_FALSE, sizeof(VertexData), (GLvoid *)(offsetof(VertexData, xyz)));
     glVertexAttribPointer(attrib->uvts, 1, GL_FLOAT, GL_FALSE, sizeof(VertexData), (GLvoid *)(offsetof(VertexData, uvts)));
-    glVertexAttribPointer(attrib->uvScales, 1, GL_FLOAT, GL_FALSE, sizeof(VertexData), (GLvoid *)(offsetof(VertexData, uvScales)));
+    // glVertexAttribPointer(attrib->uvScales, 1, GL_FLOAT, GL_FALSE, sizeof(VertexData), (GLvoid *)(offsetof(VertexData, uvScales)));
 
 
     //     GLenum error;
@@ -362,7 +362,7 @@ void draw_chunk_triangles_3d_ao_new(Attrib *attrib, GLuint buffer, GLuint indice
     glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, 0);
     glDisableVertexAttribArray(attrib->uvts);
     glDisableVertexAttribArray(attrib->position_uint);
-    glDisableVertexAttribArray(attrib->uvScales);
+    // glDisableVertexAttribArray(attrib->uvScales);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
@@ -371,16 +371,16 @@ void draw_chunk_triangles_3d_ao(Attrib *attrib, GLuint buffer, int count) {
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
     glEnableVertexAttribArray(attrib->uvts);
     glEnableVertexAttribArray(attrib->position_uint);
-    glEnableVertexAttribArray(attrib->uvScales);
+    // glEnableVertexAttribArray(attrib->uvScales);
     
     glVertexAttribPointer(attrib->position_uint, 1, GL_FLOAT, GL_FALSE, sizeof(VertexData), (GLvoid *)(offsetof(VertexData, xyz)));
     glVertexAttribPointer(attrib->uvts, 1, GL_FLOAT, GL_FALSE, sizeof(VertexData), (GLvoid *)(offsetof(VertexData, uvts)));
-    glVertexAttribPointer(attrib->uvScales, 1, GL_FLOAT, GL_FALSE, sizeof(VertexData), (GLvoid *)(offsetof(VertexData, uvScales)));
+    // glVertexAttribPointer(attrib->uvScales, 1, GL_FLOAT, GL_FALSE, sizeof(VertexData), (GLvoid *)(offsetof(VertexData, uvScales)));
     glDrawArrays(GL_TRIANGLES, 0, count);
 
     glDisableVertexAttribArray(attrib->uvts);
     glDisableVertexAttribArray(attrib->position_uint);
-    glDisableVertexAttribArray(attrib->uvScales);
+    // glDisableVertexAttribArray(attrib->uvScales);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 

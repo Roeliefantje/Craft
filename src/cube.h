@@ -4,7 +4,6 @@
 typedef struct {
     unsigned int xyz;
     unsigned int uvts;
-    unsigned int uvScales;
 } VertexData;
 
 void make_cube_face_greedy(

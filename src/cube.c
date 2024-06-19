@@ -90,17 +90,19 @@ void make_cube_face_greedy(
         unsigned int xi = x_modulo + pos[0] + 0.5;
         unsigned int yi = y + pos[1] + 0.5;
         unsigned int zi = z_modulo + pos[2] + 0.5;
+        unsigned int uScale = (((uvs[face_dir][vert][0] ? x_length : 0) & 0xFF));
+        unsigned int vScale = ((uvs[face_dir][vert][1] ? z_length  : 0) & 0xFF);
 
+        vdp->xyz = ((xi & 0x3F) << 26) | ((yi & 0xFF) << 18) | ((zi & 0x3F) << 12) | ((normal_flags[face_dir] & 0x0F) << 8) | ((vScale & 0xFF) << 0);
+        // vdp->uvScales = (((uvs[face_dir][vert][0] ? x_length : 0) & 0xFF) << 24) | (((uvs[face_dir][vert][1] ? z_length  : 0) & 0xFF) << 16);
+        
 
-        vdp->xyz = ((xi & 0xFF) << 24) | ((yi & 0xFF) << 16) | ((zi & 0xFF) << 8) | normal_flags[face_dir];
-        vdp->uvScales = (((uvs[face_dir][vert][0] ? x_length : 0) & 0xFF) << 24) | (((uvs[face_dir][vert][1] ? z_length  : 0) & 0xFF) << 16);
-
-        int u = dui + (uvs[face_dir][vert][0] ? x_length : 0); //MAXVALUE = 15, 4 bits
-        int v = dvi + (uvs[face_dir][vert][1] ? z_length : 0); //MAXVALUE = 15, 4 bits
-        int t = ao[vert] * 2; //MAXVALUE = 2, 2 bits 
-        int s = light[vert] * 16; //MAXVALUE = 15 4 bits
-
-        vdp->uvts = ((u & 0xFF) << 24) | ((v & 0xFF) << 16) | ((t & 0xFF) << 8) | s;
+        unsigned int u = dui + (uvs[face_dir][vert][0] ? x_length : 0); //MAXVALUE = 15, 4 bits
+        unsigned int v = dvi + (uvs[face_dir][vert][1] ? z_length : 0); //MAXVALUE = 15, 4 bits
+        unsigned int t = ao[vert] * 2; //MAXVALUE = 2, 2 bits 
+        unsigned int s = light[vert] * 15; //MAXVALUE = 15 4 bits
+        vdp->uvts = ((u & 0xFF) << 24) | ((v & 0xFF) << 16) | ((t & 0x03) << 14) | ((s & 0x0F) << 10) | ((uScale & 0xFF) << 0);
+        // vdp->uvts = ((u & 0xFF) << 24) | ((v & 0xFF) << 16) | ((t & 0xFF) << 8) | s;
         *(vdp++);
     }
 
@@ -196,15 +198,15 @@ void make_cube_faces(
             unsigned int yi = y + n * positions[i][vert][1] + 0.5; //MAX VALUE 254, 8 bits
             unsigned int zi = z_modulo + n * positions[i][vert][2] + 0.5; //MAX VALUE 31, 5 bits
                                                           //Normal flags MAX VALUE 10, 4 bits
-            vdp->uvScales = 0;
+            // vdp->uvScales = 0;
                              
-            vdp->xyz = ((xi & 0xFF) << 24) | ((yi & 0xFF) << 16) | ((zi & 0xFF) << 8) | normal_flags[i];
+            vdp->xyz = ((xi & 0x3F) << 26) | ((yi & 0xFF) << 18) | ((zi & 0x3F) << 12) | ((normal_flags[i] & 0x0F) << 8);
             int u = dui + (uvs[i][vert][0] ? 1 : 0); //MAXVALUE = 15, 4 bits
             int v = dvi + (uvs[i][vert][1] ? 1 : 0); //MAXVALUE = 15, 4 bits
             int t = ao[i][vert] * 2; //MAXVALUE = 2, 2 bits 
             int s = light[i][vert] * 16; //MAXVALUE = 15 4 bits
 
-            vdp->uvts = ((u & 0xFF) << 24) | ((v & 0xFF) << 16) | ((t & 0xFF) << 8) | s;
+            vdp->uvts = ((u & 0xFF) << 24) | ((v & 0xFF) << 16) | ((t & 0x03) << 14) | ((s & 0x0F) << 10);
             
             *(vdp++);
         }
@@ -293,17 +295,17 @@ void make_plant(
             float pz_m = fmod( pz, CHUNK_SIZE);
             pz_m < 0 ? pz_m += CHUNK_SIZE : pz_m;
 
-            vdp->uvScales = 0;
+            // vdp->uvScales = 0;
 
             int pxi = px_m + n * positions[i][vert][0] + 0.5;
             int pyi = py + n * positions[i][vert][1] + 0.5;
             int pzi = pz_m + n * positions[i][vert][2] + 0.5;
-            vdp->xyz = ((pxi & 0xFF) << 24) | ((pyi & 0xFF) << 16) | ((pzi & 0xFF) << 8) | normal_flags[i];
+            vdp->xyz = ((pxi & 0x3F) << 26) | ((pyi & 0xFF) << 18) | ((pzi & 0x3F) << 12) | ((normal_flags[i] & 0x0F) << 8);
             int u = dui + (uvs[i][vert][0] ? 1 : 0);
             int v = dvi + (uvs[i][vert][1] ? 1 : 0);
             int t = ao * 2; //MAXVALUE = 2, 2 bits 
             int s = light * 16; //MAXVALUE = 15 4 bits
-            vdp->uvts = ((u & 0xFF) << 24) | ((v & 0xFF) << 16) | ((t & 0xFF) << 8) | s;
+            vdp->uvts = ((u & 0xFF) << 24) | ((v & 0xFF) << 16) | ((t & 0x03) << 14) | ((s & 0x0F) << 10);
 
             *(vdp++);
         }
@@ -389,17 +391,17 @@ void make_plant_old(
             float pz_m = fmod( pz, CHUNK_SIZE);
             pz_m < 0 ? pz_m += CHUNK_SIZE : pz_m;
 
-            vdp->uvScales = 0;
+            // vdp->uvScales = 0;
 
             int pxi = px_m + n * positions[i][j][0] + 0.5;
             int pyi = py + n * positions[i][j][1] + 0.5;
             int pzi = pz_m + n * positions[i][j][2] + 0.5;
-            vdp->xyz = ((pxi & 0xFF) << 24) | ((pyi & 0xFF) << 16) | ((pzi & 0xFF) << 8) | normal_flags[i];
+            vdp->xyz = ((pxi & 0x3F) << 26) | ((pyi & 0xFF) << 18) | ((pzi & 0x3F) << 12) | ((normal_flags[i] & 0x0F) << 8);
             int u = dui + (uvs[i][j][0] ? 1 : 0);
             int v = dvi + (uvs[i][j][1] ? 1 : 0);
             int t = ao * 2; //MAXVALUE = 2, 2 bits 
             int s = light * 16; //MAXVALUE = 15 4 bits
-            vdp->uvts = ((u & 0xFF) << 24) | ((v & 0xFF) << 16) | ((t & 0xFF) << 8) | s;
+            vdp->uvts = ((u & 0xFF) << 24) | ((v & 0xFF) << 16) | ((t & 0x03) << 14) | ((s & 0x0F) << 10);
 
             *(vdp++);
         }
@@ -487,15 +489,15 @@ void make_cube_faces_old(
             unsigned int yi = y + n * positions[i][j][1] + 0.5; //MAX VALUE 254, 8 bits
             unsigned int zi = z_modulo + n * positions[i][j][2] + 0.5; //MAX VALUE 31, 5 bits
                                                           //Normal flags MAX VALUE 10, 4 bits
-            vdp->uvScales = 0;
+            // vdp->uvScales = 0;
                              
-            vdp->xyz = ((xi & 0xFF) << 24) | ((yi & 0xFF) << 16) | ((zi & 0xFF) << 8) | normal_flags[i];
+            vdp->xyz = ((xi & 0x3F) << 26) | ((yi & 0xFF) << 18) | ((zi & 0x3F) << 12) | ((normal_flags[i] & 0x0F) << 8);
             int u = dui + (uvs[i][j][0] ? 1 : 0); //MAXVALUE = 15, 4 bits
             int v = dvi + (uvs[i][j][1] ? 1 : 0); //MAXVALUE = 15, 4 bits
             int t = ao[i][j] * 2; //MAXVALUE = 2, 2 bits 
             int s = light[i][j] * 16; //MAXVALUE = 15 4 bits
 
-            vdp->uvts = ((u & 0xFF) << 24) | ((v & 0xFF) << 16) | ((t & 0xFF) << 8) | s;
+            vdp->uvts = ((u & 0xFF) << 24) | ((v & 0xFF) << 16) | ((t & 0x03) << 14) | ((s & 0x0F) << 10);
             
             *(vdp++);
         }
