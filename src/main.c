@@ -649,16 +649,6 @@ int chunk_visible(__m256 planes[6][4], int p, int q, int miny, int maxy) {
     __m256 points_x = _mm256_add_ps(_mm256_set1_ps(x), d1);
     __m256 points_y = _mm256_set_ps(miny,miny,miny,miny,maxy,maxy,maxy,maxy);
     __m256 points_z = _mm256_add_ps(_mm256_set1_ps(z), d2);
-    // float points[8][3] = {
-    //     {x + 0, miny, z + 0},
-    //     {x + d, miny, z + 0},
-    //     {x + 0, miny, z + d},
-    //     {x + d, miny, z + d},
-    //     {x + 0, maxy, z + 0},
-    //     {x + d, maxy, z + 0},
-    //     {x + 0, maxy, z + d},
-    //     {x + d, maxy, z + d}
-    // };
 
     int n = g->ortho ? 4 : 6;
     for (int i = 0; i < n; i++) {
@@ -2190,6 +2180,7 @@ int render_chunks(Attrib *attrib, Player *player) {
         matrix, g->width, g->height,
         s->x, s->y, s->z, s->rx, s->ry, g->fov, g->ortho, g->render_radius);
 
+    #if USE_GPU_FRUSTUM_CULLING
     float matrix_gpu[16];
     set_matrix_3d(
         matrix_gpu, g->width, g->height,
@@ -2225,6 +2216,10 @@ int render_chunks(Attrib *attrib, Player *player) {
     if (attrib->lookup_table == NULL) {
         return result;
     }
+    #else
+    __m256 planes[6][4];
+    frustum_planes(planes, g->render_radius, matrix);
+    #endif
 
     glUseProgram(attrib->program);
     glUniformMatrix4fv(attrib->matrix, 1, GL_FALSE, matrix);
@@ -2242,14 +2237,18 @@ int render_chunks(Attrib *attrib, Player *player) {
         if (chunk_distance(chunk, p, q) > g->render_radius) {
             continue;
         }
+        #if USE_GPU_FRUSTUM_CULLING
         if (attrib->lookup_table[chunk->key.p - p + RENDER_CHUNK_RADIUS + (chunk->key.q - q + RENDER_CHUNK_RADIUS) * RENDER_CHUNK_RADIUS * 2] == 0 ){
             continue;
         }
-        // if (!chunk_visible(
-        //     planes, chunk->key.p, chunk->key.q, chunk->miny, chunk->maxy))
-        // {
-        //     continue;
-        // }
+        #else
+        if (!chunk_visible(
+            planes, chunk->key.p, chunk->key.q, chunk->miny, chunk->maxy))
+        {
+            continue;
+        }
+        #endif
+
 
         draw_chunk(attrib, chunk);
         result += chunk->faces;

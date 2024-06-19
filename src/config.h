@@ -26,6 +26,7 @@
 #define SHOW_CHAT_TEXT 1
 #define SHOW_PLAYER_NAMES 1
 #define USE_GREEDY_MESHING 1
+#define USE_GPU_FRUSTUM_CULLING 0
 
 // key bindings
 #define CRAFT_KEY_FORWARD 'W'
